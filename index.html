@@ -185,7 +185,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
             <input type="text" id="mmEmail" autocomplete="off">
           </div>
         </fieldset>
-        <p class="hint">Sproget genkendes automatisk: kyrillisk skrift oversættes til dansk, alt andet til russisk. En besked med begge sprog oversættes sætning for sætning. Hvis tal i oversættelsen ikke stemmer med originalen, eller en sætning kommer uoversat tilbage, tilføjes en note om at det bør bekræftes. Talegenkendelse kræver Chrome, Edge eller Safari. Stemmen "Automatisk" bruger en stemme, der er installeret på enheden, og ellers Googles online-stemme.</p>
+        <p class="hint">Sproget genkendes automatisk: kyrillisk skrift oversættes til dansk, alt andet til russisk. En besked med begge sprog oversættes sætning for sætning. Hvis tal i oversættelsen ikke stemmer med originalen, eller en sætning kommer uoversat tilbage, tilføjes en note om at det bør bekræftes. Talegenkendelse kræver Chrome, Edge eller Safari. Oplæsningen bruger som standard Googles online-stemme. Vælg "Automatisk" eller en bestemt stemme for at bruge en stemme, der er installeret på enheden.</p>
       </div>
     </details>
   </div>
@@ -335,8 +335,8 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
 
   // ---------- text to speech ----------
   // Chrome loads voices asynchronously, and its built-in online voices (e.g. "Google русский") often
-  // fail silently, especially when speak() follows cancel(). So "auto" uses an installed local voice
-  // when there is one, and otherwise plays Google's online speech as ordinary audio.
+  // fail silently, especially when speak() follows cancel(). So the default plays Google's online
+  // speech as ordinary audio; "auto" uses an installed local voice when there is one.
   const hasSynth = "speechSynthesis" in window;
   let voices = [], audio = null, speakToken = 0, utterances = [];
   const matching = lang => voices.filter(v => v.lang.replace("_", "-").toLowerCase().startsWith(lang));
@@ -344,7 +344,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   function fillVoiceLists() {
     for (const lang of ["da", "ru"]) {
       const sel = $(lang + "Voice");
-      sel.innerHTML = '<option value="auto">Automatisk (anbefalet)</option><option value="online">Google online-stemme</option>';
+      sel.innerHTML = '<option value="online">Google online-stemme (anbefalet)</option><option value="auto">Automatisk: enhedens stemme, hvis den findes</option>';
       for (const v of matching(lang)) {
         const o = document.createElement("option");
         o.value = v.voiceURI;
