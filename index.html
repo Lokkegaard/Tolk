@@ -91,14 +91,19 @@ summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
 .log .tag { font: 600 .72rem var(--mono); grid-row: span 2; padding-top: 3px; }
 .log .tag.da { color: var(--da); } .log .tag.ru { color: var(--ru); }
 .log .src { color: var(--muted); font-size: .9rem; } .log .dst { overflow-wrap: anywhere; }
-.settings { padding: 0 14px 14px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-.settings label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+.settings { padding: 0 14px 14px; display: grid; gap: 16px 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+fieldset { margin: 0; padding: 0; border: 0; min-width: 0; display: grid; gap: 12px; align-content: start; }
+legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: .85rem; color: var(--muted); }
 .settings select, .settings input[type=text], .settings input[type=url] {
-  font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px;
+  width: 100%; min-width: 0; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px;
 }
-.vrow { display: flex; gap: 8px; }
-.vrow select { flex: 1; min-width: 0; }
-.check { display: flex !important; align-items: center; gap: 8px; color: var(--fg) !important; }
+.vrow { display: flex; gap: 8px; align-items: stretch; }
+.vrow select { flex: 1 1 auto; }
+.vrow button { flex: 0 0 auto; }
+.check { display: flex; align-items: center; gap: 8px; font-size: .95rem; cursor: pointer; }
+.check input { flex: none; width: 18px; height: 18px; margin: 0; }
 .hint { grid-column: 1 / -1; font-size: .82rem; color: var(--muted); margin: 0; max-width: 75ch; }
 </style>
 </head>
@@ -144,30 +149,42 @@ summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
     <details>
       <summary>Indstillinger</summary>
       <div class="settings">
-        <label>Oversættelseskilde
-          <select id="provider">
-            <option value="google">Google Translate (gratis, uden nøgle)</option>
-            <option value="mymemory">MyMemory (gratis, uden nøgle)</option>
-            <option value="libre">LibreTranslate (open source, egen server)</option>
-          </select>
-        </label>
-        <label>LibreTranslate-adresse
-          <input type="url" id="libreUrl" placeholder="http://localhost:5000">
-        </label>
-        <label>LibreTranslate API-nøgle (valgfri)
-          <input type="text" id="libreKey" autocomplete="off">
-        </label>
-        <label>E-mail til MyMemory (valgfri, giver større dagskvote)
-          <input type="text" id="mmEmail" autocomplete="off">
-        </label>
-        <label>Dansk stemme
-          <span class="vrow"><select id="daVoice"></select><button type="button" class="ghost" id="daTest">Prøv</button></span>
-        </label>
-        <label>Russisk stemme
-          <span class="vrow"><select id="ruVoice"></select><button type="button" class="ghost" id="ruTest">Prøv</button></span>
-        </label>
-        <label class="check"><input type="checkbox" id="autoSpeak" checked> Læs oversættelsen højt automatisk</label>
-        <label class="check"><input type="checkbox" id="fallback" checked> Prøv en anden kilde, hvis den valgte fejler</label>
+        <fieldset>
+          <legend>Oplæsning</legend>
+          <label class="check"><input type="checkbox" id="autoSpeak" checked> Læs oversættelsen højt automatisk</label>
+          <div class="field">
+            <label for="daVoice">Dansk stemme</label>
+            <div class="vrow"><select id="daVoice"></select><button type="button" class="ghost" id="daTest">Prøv</button></div>
+          </div>
+          <div class="field">
+            <label for="ruVoice">Russisk stemme</label>
+            <div class="vrow"><select id="ruVoice"></select><button type="button" class="ghost" id="ruTest">Prøv</button></div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Oversættelse</legend>
+          <div class="field">
+            <label for="provider">Kilde</label>
+            <select id="provider">
+              <option value="google">Google Translate (gratis, uden nøgle)</option>
+              <option value="mymemory">MyMemory (gratis, uden nøgle)</option>
+              <option value="libre">LibreTranslate (open source, egen server)</option>
+            </select>
+          </div>
+          <label class="check"><input type="checkbox" id="fallback" checked> Prøv en anden kilde, hvis den valgte fejler</label>
+          <div class="field">
+            <label for="libreUrl">LibreTranslate-adresse</label>
+            <input type="url" id="libreUrl" placeholder="http://localhost:5000">
+          </div>
+          <div class="field">
+            <label for="libreKey">LibreTranslate API-nøgle (valgfri)</label>
+            <input type="text" id="libreKey" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="mmEmail">E-mail til MyMemory (valgfri, giver større dagskvote)</label>
+            <input type="text" id="mmEmail" autocomplete="off">
+          </div>
+        </fieldset>
         <p class="hint">Sproget genkendes automatisk: kyrillisk skrift oversættes til dansk, alt andet til russisk. En besked med begge sprog oversættes sætning for sætning. Hvis tal i oversættelsen ikke stemmer med originalen, eller en sætning kommer uoversat tilbage, tilføjes en note om at det bør bekræftes. Talegenkendelse kræver Chrome, Edge eller Safari. Stemmen "Automatisk" bruger en stemme, der er installeret på enheden, og ellers Googles online-stemme.</p>
       </div>
     </details>
