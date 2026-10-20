@@ -15,9 +15,25 @@ En lille webapp, der tolker mellem dansk og russisk med tale og tekst, uden AI.
 
 ## To enheder
 
-Tryk "To enheder", vælg hvem der bruger telefonen, og scan QR-koden (eller send linket) med den anden telefon. Hver person taler i sin egen telefon, og oversættelsen vises og læses højt på den andens.
+Appen er lavet til samtaler mellem to elever eller en lærer og en elev, hvor hver har sin egen computer.
 
-Beskederne sendes gennem den gratis open source-tjeneste [ntfy.sh](https://ntfy.sh), krypteret med AES-GCM. Nøglen ligger kun i linkets `#`-del, som browseren aldrig sender til nogen server, så kun enheder med linket kan læse samtalen.
+1. Tryk "To enheder" og vælg, hvem der bruger computeren. Der vises en kode med 8 cifre, en QR-kode og et link.
+2. Den anden skriver koden under "To enheder" og vælger sit sprog, eller åbner linket.
+3. Samtalen vises som en chat. Oversættelsen læses kun højt på modtagerens computer.
+
+Beskederne sendes gennem den gratis open source-tjeneste [ntfy.sh](https://ntfy.sh), krypteret med AES-GCM. Både krypteringsnøglen og navnet på samtalen dannes ud fra koden med PBKDF2, så koden aldrig forlader computeren. Del kun koden med den, du taler med.
+
+## Tilbageoversættelse
+
+Under hver af dine egne beskeder står "Kommer frem som: …": oversættelsen oversat tilbage til dit eget sprog. Så kan du se, om meningen er gået tabt, og sige det på en anden måde.
+
+Talt tekst lægges i tekstfeltet og sendes efter 3 sekunder. Klik i feltet for at rette den først. Ventetiden kan ændres under Indstillinger.
+
+## Tastaturgenveje
+
+- Hold **mellemrum** nede for at tale (når du ikke skriver i et felt).
+- **Enter** sender.
+- **Esc** stopper oplæsning og nedtælling.
 
 ## Oversættelseskilder
 

@@ -126,6 +126,39 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
 .inv { flex: 1 1 260px; min-width: 0; display: grid; gap: 8px; }
 .inv input { width: 100%; font: .85rem var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
 .stage.ru-first .panel.ru { order: -1; }
+.pgrid { display: grid; gap: 16px 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+.ptitle { font-weight: 600; }
+.pbox label { font-size: .85rem; color: var(--muted); }
+.codein { font: 600 1.4rem var(--mono); letter-spacing: .12em; width: 100%; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.codebox { display: grid; gap: 2px; }
+.clabel { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.code { font: 600 2.4rem/1.1 var(--mono); letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.back { display: block; margin-top: 10px; font-size: .95rem; color: var(--muted); }
+.back b { font-weight: 500; }
+
+/* chat view, used when two devices are connected */
+.app > .chat { flex: 1 0 auto; }
+.chat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-height: 45vh; max-height: 62vh; overflow-y: auto; display: flex; flex-direction: column; }
+.chatEmpty { margin: auto; text-align: center; color: var(--muted); max-width: 52ch; }
+.chatList { list-style: none; margin: auto 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.msg { max-width: min(85%, 62ch); padding: 10px 14px; border-radius: 14px; display: grid; gap: 4px; min-width: 0; }
+.msg.mine { align-self: flex-end; border-bottom-right-radius: 4px; }
+.msg.mine.da { background: var(--da-soft); } .msg.mine.ru { background: var(--ru-soft); }
+.msg.theirs { align-self: flex-start; border-bottom-left-radius: 4px; background: var(--bg); border: 1px solid var(--line); }
+.msg.theirs.da { border-left: 4px solid var(--ru); } .msg.theirs.ru { border-left: 4px solid var(--da); }
+.mtext { font-size: 1.25rem; line-height: 1.35; overflow-wrap: anywhere; }
+.msub { font-size: .85rem; color: var(--muted); overflow-wrap: anywhere; }
+.msg .note { margin-top: 2px; }
+.msg .back { margin-top: 0; font-size: .85rem; }
+.compose .mic { flex: 0 0 auto; padding: 0 18px; }
+@media (max-width: 560px) {
+  form.compose { flex-wrap: wrap; }
+  .compose .mic { flex: 1 1 100%; padding: 12px 18px; }
+}
+.mic.da { --c: var(--da); } .mic.ru { --c: var(--ru); }
+.keys { margin: 0; font-size: .8rem; color: var(--muted); }
+kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); color: var(--fg); }
+@media (hover: none), (pointer: coarse) { .keys { display: none; } }
 </style>
 </head>
 <body>
@@ -134,27 +167,42 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     <h1>Tolk <span>dansk ⇄ русский</span></h1>
     <div class="tools">
       <button class="ghost" id="flipBtn" aria-pressed="false" title="Vend det russiske felt, så personen overfor kan læse det">Vend RU-felt</button>
-      <button class="ghost" id="pairBtn" aria-expanded="false"><span class="dot" id="hdrDot"></span>To enheder</button>
+      <button class="ghost" id="pairBtn" aria-expanded="false"><span class="dot" id="hdrDot"></span>To enheder · <span lang="ru">Два устройства</span></button>
       <button class="ghost" id="clearBtn">Ryd</button>
     </div>
   </header>
 
   <section class="pair" id="pair" hidden aria-label="To enheder">
     <div id="pairStart" class="pbox">
-      <p class="lead">Brug to enheder, så hver person har sin egen telefon.<span lang="ru">Два устройства: у каждого свой телефон.</span></p>
-      <p>Hvem bruger denne enhed? / <span lang="ru">Кто пользуется этим устройством?</span></p>
-      <div class="roles">
-        <button type="button" class="da" data-role="da">Jeg taler dansk</button>
-        <button type="button" class="ru" data-role="ru" lang="ru">Я говорю по-русски</button>
+      <p class="lead">Brug to computere, så hver person har sin egen.<span lang="ru">Два компьютера: у каждого свой.</span></p>
+      <div class="pgrid">
+        <div class="pbox">
+          <p class="ptitle">Start en samtale / <span lang="ru">Начать разговор</span></p>
+          <p>Hvem bruger denne computer? / <span lang="ru">Кто пользуется этим компьютером?</span></p>
+          <div class="roles" id="startRoles">
+            <button type="button" class="da" data-role="da">Jeg taler dansk</button>
+            <button type="button" class="ru" data-role="ru" lang="ru">Я говорю по-русски</button>
+          </div>
+        </div>
+        <form class="pbox" id="joinForm">
+          <p class="ptitle">Har du fået en kode? / <span lang="ru">У вас есть код?</span></p>
+          <label for="joinCode">Skriv koden med 8 cifre / <span lang="ru">Введите код из 8 цифр</span></label>
+          <input id="joinCode" class="codein" inputmode="numeric" autocomplete="off" placeholder="1234-5678" maxlength="12">
+          <div class="roles">
+            <button type="submit" class="da" data-role="da">Forbind: jeg taler dansk</button>
+            <button type="submit" class="ru" data-role="ru" lang="ru">Подключиться: я говорю по-русски</button>
+          </div>
+        </form>
       </div>
-      <p class="hint">Beskederne sendes krypteret gennem den gratis open source-tjeneste ntfy.sh. Nøglen ligger kun i linket, så kun enheder med linket kan læse dem.</p>
+      <p class="hint">Beskederne sendes krypteret gennem den gratis open source-tjeneste ntfy.sh. Nøglen dannes ud fra koden, så kun den, der kender koden, kan læse samtalen. Del kun koden med den, du taler med.</p>
     </div>
     <div id="pairOn" class="pbox" hidden>
       <div class="pstate"><span class="dot" id="pairDot"></span><span id="pairText"></span></div>
       <div class="invite">
+        <div class="codebox"><span class="clabel">Kode / <span lang="ru">Код</span></span><span class="code" id="codeText"></span></div>
         <div class="qr" id="qr" hidden></div>
         <div class="inv">
-          <p>Scan koden med den anden telefon, eller send linket til den.<br><span lang="ru">Отсканируйте код другим телефоном или откройте ссылку.</span></p>
+          <p>Den anden skriver koden under "To enheder", scanner QR-koden eller åbner linket.<br><span lang="ru">Второй участник вводит код в «Два устройства», сканирует QR-код или открывает ссылку.</span></p>
           <input id="inviteLink" readonly aria-label="Link til den anden enhed">
           <div class="pf">
             <button type="button" class="ghost" id="copyLink">Kopiér link</button>
@@ -184,11 +232,18 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     </section>
   </main>
 
+  <section class="chat" id="chat" hidden aria-label="Samtale">
+    <p class="chatEmpty" id="chatEmpty">Samtalen vises her. Hold mellemrum nede eller tryk på mikrofonen for at tale.<br><span lang="ru">Здесь появится разговор. Удерживайте пробел или нажмите на микрофон, чтобы говорить.</span></p>
+    <ol class="chatList" id="chatList" aria-live="polite"></ol>
+  </section>
+
   <div class="dock">
     <form class="compose" id="compose">
+      <button type="button" class="mic da" id="myMic" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span id="myMicLabel">Tal</span></button>
       <textarea id="input" rows="2" placeholder="Skriv på dansk eller russisk … / Пишите по-датски или по-русски …"></textarea>
       <button class="send" type="submit">Oversæt</button>
     </form>
+    <p class="keys">Hold <kbd>mellemrum</kbd> nede for at tale · <kbd>Enter</kbd> sender · <kbd>Esc</kbd> stopper oplæsning<br><span lang="ru">Удерживайте <kbd>пробел</kbd>, чтобы говорить · <kbd>Enter</kbd> отправляет · <kbd>Esc</kbd> останавливает озвучку</span></p>
     <div class="status" id="status" role="status"></div>
     <details id="logBox">
       <summary>Samtale (<span id="logCount">0</span>)</summary>
@@ -207,6 +262,18 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
           <div class="field">
             <label for="ruVoice">Russisk stemme</label>
             <div class="vrow"><select id="ruVoice"></select><button type="button" class="ghost" id="ruTest">Prøv</button></div>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Tale</legend>
+          <div class="field">
+            <label for="reviewDelay">Tid til at rette talt tekst, før den sendes</label>
+            <select id="reviewDelay">
+              <option value="0">Send med det samme</option>
+              <option value="3" selected>3 sekunder</option>
+              <option value="6">6 sekunder</option>
+              <option value="manual">Send først, når jeg trykker Enter</option>
+            </select>
           </div>
         </fieldset>
         <fieldset>
@@ -248,7 +315,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   const CONFIRM = "(Bør bekræftes / Нужно уточнить)";
 
   // ---------- settings ----------
-  const S_KEYS = ["provider", "libreUrl", "libreKey", "mmEmail", "autoSpeak", "fallback"];
+  const S_KEYS = ["provider", "libreUrl", "libreKey", "mmEmail", "autoSpeak", "fallback", "reviewDelay"];
   const store = {
     get(k) { try { return localStorage.getItem("tolk." + k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem("tolk." + k, v); } catch {} }
@@ -342,31 +409,76 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     if (!text) return;
     setStatus("Oversætter …");
     const segs = segments(text);
+    let id, results;
     try {
-      const results = await Promise.all(segs.map(s => translateText(s.text.trim(), s.lang, other(s.lang))));
+      results = await Promise.all(segs.map(s => translateText(s.text.trim(), s.lang, other(s.lang))));
       const translated = clean(results.join(" "));
       const unsure = segs.some((s, i) => needsConfirm(s.text, results[i]));
       const srcLang = segs.length === 1 ? segs[0].lang : detect(text);
-      show(srcLang, text, translated, unsure);
+      id = show(srcLang, text, translated, unsure);
       setStatus("");
     } catch (e) {
       setStatus("Kunne ikke oversætte: " + e.message + ". Tjek internetforbindelsen eller vælg en anden kilde under Indstillinger.", true);
+      return;
     }
+    // Back-translation, done after sending so it never delays the other person:
+    // shows the sender how the message reads on the other side.
+    try {
+      const back = await Promise.all(segs.map((s, i) => translateText(results[i], other(s.lang), s.lang)));
+      setBack(id, clean(back.join(" ")));
+    } catch { setBack(id, null); }
   }
 
   // ---------- UI ----------
-  let last = { da: "", ru: "" };
+  let last = { da: "", ru: "" }, lastId = 0, msgSeq = 0;
+  const BACK = { da: "Kommer frem som: ", ru: "Дошло как: " };
+  const NOBACK = { da: "(kunne ikke oversættes tilbage)", ru: "(не удалось перевести обратно)" };
+  const ORIG = { da: "Original: ", ru: "Оригинал: " };
+  function backEl(lang) {
+    const b = document.createElement("span");
+    b.className = "back";
+    b.dataset.lang = lang;
+    b.textContent = BACK[lang] + "…";
+    return b;
+  }
   function show(srcLang, src, dst, unsure, remote) {
-    const tl = other(srcLang);
+    const tl = other(srcLang), id = lastId = ++msgSeq;
     last[srcLang] = src; last[tl] = dst;
     setPanel(srcLang, src, false);
     setPanel(tl, dst, unsure);
+    if (!remote) { const b = backEl(srcLang); b.id = "panelBack"; $(srcLang + "Text").appendChild(b); }
     $(srcLang + "Role").textContent = srcLang === "da" ? "original" : "оригинал";
     $(tl + "Role").textContent = tl === "da" ? "oversat" : "перевод";
     addLog(srcLang, src, dst, unsure);
+    if (room) addChat(id, srcLang, src, dst, unsure, !remote);
     // With two devices, the translation is read aloud only on the device of the person it is for.
     if (opt("autoSpeak") && (!room || room.role === tl)) speak(unsure ? dst + " " + CONFIRM : dst, tl);
     if (room && !remote) relaySend({ k: "msg", srcLang, src, dst, unsure });
+    return id;
+  }
+  function setBack(id, back) {
+    const els = [document.querySelector('.msg[data-id="' + id + '"] .back')];
+    if (id === lastId) els.push($("panelBack"));
+    for (const el of els) if (el) el.textContent = back ? BACK[el.dataset.lang] + back : NOBACK[el.dataset.lang];
+  }
+  function addChat(id, srcLang, src, dst, unsure, mine) {
+    const shown = mine ? srcLang : other(srcLang);
+    const li = document.createElement("li");
+    li.className = "msg " + (mine ? "mine " : "theirs ") + shown;
+    li.dataset.id = id;
+    const main = document.createElement("div");
+    main.className = "mtext";
+    main.lang = shown;
+    main.textContent = mine ? src : dst;
+    let sub;
+    if (mine) sub = backEl(srcLang);
+    else { sub = document.createElement("div"); sub.textContent = ORIG[shown] + src; }
+    sub.classList.add("msub");
+    li.append(main, sub);
+    if (unsure) { const n = document.createElement("span"); n.className = "note"; n.textContent = CONFIRM; li.append(n); }
+    $("chatList").append(li);
+    $("chatEmpty").hidden = true;
+    $("chat").scrollTop = $("chat").scrollHeight;
   }
   function setPanel(lang, text, unsure, interim) {
     const el = $(lang + "Text");
@@ -489,20 +601,22 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
 
   // ---------- speech recognition ----------
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let rec = null, recLang = null;
+  let rec = null, recLang = null, pttLang = "da";
   function stopRec() { if (rec) { rec.stop(); } }
-  function startRec(lang) {
+  // hold = push-to-talk with the space bar: keep listening until the key is released.
+  function startRec(lang, hold) {
     if (!SR) { setStatus("Talegenkendelse understøttes ikke i denne browser. Brug Chrome, Edge eller Safari, eller skriv i feltet.", true); return; }
-    if (rec) { const was = recLang; stopRec(); if (was === lang) return; }
+    if (rec) { if (hold) return; const was = recLang; stopRec(); if (was === lang) return; }
+    flushReview();
     stopSpeaking();
     rec = new SR();
-    recLang = lang;
+    recLang = pttLang = lang;
     rec.lang = LANG[lang].tts;
     rec.interimResults = true;
-    rec.continuous = false;
+    rec.continuous = !!hold;
     let finalText = "";
-    const btn = $(lang + "Mic");
-    btn.classList.add("on");
+    const btns = [$(lang + "Mic"), $("myMic")];
+    btns.forEach(b => b.classList.add("on"));
     setStatus(lang === "da" ? "Lytter (dansk) …" : "Слушаю (русский) …");
     rec.onresult = e => {
       let interim = "";
@@ -511,44 +625,100 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
         if (e.results[i].isFinal) finalText += t; else interim += t;
       }
       setPanel(lang, finalText + interim, false, true);
+      if (room) $("input").value = finalText + interim;
     };
     rec.onerror = e => {
       const msg = { "not-allowed": "Mikrofonen er blokeret. Giv browseren adgang til mikrofonen.", "no-speech": "Hørte ingen tale. Prøv igen.", "network": "Talegenkendelsen kræver internetforbindelse." }[e.error] || "Fejl i talegenkendelse: " + e.error;
       setStatus(msg, true);
     };
     rec.onend = () => {
-      btn.classList.remove("on");
+      btns.forEach(b => b.classList.remove("on"));
       rec = null; recLang = null;
-      if (finalText.trim()) interpret(finalText);
+      if (finalText.trim()) review(finalText.trim());
       else if ($("status").textContent.startsWith("Lytter") || $("status").textContent.startsWith("Слушаю")) setStatus("");
     };
     rec.start();
   }
   $("daMic").onclick = () => startRec("da");
   $("ruMic").onclick = () => startRec("ru");
+  $("myMic").onclick = () => startRec(room?.role || pttLang);
 
-  // ---------- text input ----------
-  $("compose").addEventListener("submit", e => {
-    e.preventDefault();
+  // ---------- review spoken text before it is sent ----------
+  let reviewTimer = null;
+  const EDIT_HINT = "Ret teksten og tryk Enter for at sende. / Исправьте текст и нажмите Enter.";
+  function sendInput() {
+    clearInterval(reviewTimer); reviewTimer = null;
     const v = $("input").value;
     $("input").value = "";
     interpret(v);
-  });
+  }
+  function review(text) {
+    const delay = opt("reviewDelay"), inp = $("input");
+    if (delay === "0") return interpret(text);
+    inp.value = text;
+    if (delay === "manual") { inp.focus(); setStatus(EDIT_HINT); return; }
+    let left = +delay || 3;
+    const tick = () => setStatus("Sender om " + left + " s. Klik i feltet for at rette. / Отправка через " + left + " с. Нажмите на поле, чтобы исправить.");
+    tick();
+    reviewTimer = setInterval(() => { if (--left > 0) tick(); else { setStatus(""); sendInput(); } }, 1000);
+  }
+  function cancelReview() {
+    if (!reviewTimer) return;
+    clearInterval(reviewTimer); reviewTimer = null;
+    setStatus(EDIT_HINT);
+  }
+  function flushReview() { if (reviewTimer) sendInput(); }
+
+  // ---------- text input ----------
+  $("compose").addEventListener("submit", e => { e.preventDefault(); sendInput(); });
+  $("input").addEventListener("pointerdown", cancelReview);
   $("input").addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("compose").requestSubmit(); }
+    else if (e.key !== "Escape") cancelReview();
+  });
+
+  // ---------- keyboard shortcuts ----------
+  // Hold space to talk (outside text fields), Esc stops reading aloud and the send countdown.
+  const typing = el => el.closest?.("input, textarea, select, [contenteditable]");
+  let holding = false;
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") { stopSpeaking(); cancelReview(); return; }
+    if (e.code !== "Space" || typing(e.target)) return;
+    e.preventDefault();
+    if (e.repeat || holding) return;
+    holding = true;
+    startRec(room?.role || pttLang, true);
+  });
+  document.addEventListener("keyup", e => {
+    if (e.code !== "Space" || !holding) return;
+    e.preventDefault();
+    holding = false;
+    stopRec();
   });
 
   // ---------- two devices ----------
-  // Messages go through the free, open-source relay ntfy.sh, encrypted with AES-GCM. The key lives
-  // only in the link's #fragment, which the browser never sends to any server.
+  // Messages go through the free, open-source relay ntfy.sh, encrypted with AES-GCM. Both the relay
+  // topic and the key are derived from an 8-digit code with PBKDF2, so the code itself never leaves
+  // the device and the topic name does not reveal it cheaply. Digits work on Danish and Russian
+  // keyboard layouts alike.
   const RELAY = "https://ntfy.sh/";
   const myId = Math.random().toString(36).slice(2, 10);
   const seen = new Set();
-  let room = null; // { topic, keyStr, key, role, es, since, peer, state }
+  let room = null; // { code, topic, key, role, es, since, peer, state }
 
   const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
-  const randomB64u = n => b64u(crypto.getRandomValues(new Uint8Array(n)));
+  const newCode = () => String(crypto.getRandomValues(new Uint32Array(1))[0] % 1e8).padStart(8, "0");
+  const fmtCode = c => c.slice(0, 4) + "-" + c.slice(4);
+
+  async function deriveRoom(code) {
+    const enc = new TextEncoder();
+    const base = await crypto.subtle.importKey("raw", enc.encode(code), "PBKDF2", false, ["deriveBits", "deriveKey"]);
+    const kdf = salt => ({ name: "PBKDF2", hash: "SHA-256", iterations: 150000, salt: enc.encode(salt) });
+    const topicBits = await crypto.subtle.deriveBits(kdf("tolk-da-ru/topic"), base, 96);
+    const key = await crypto.subtle.deriveKey(kdf("tolk-da-ru/key"), base, { name: "AES-GCM", length: 128 }, false, ["encrypt", "decrypt"]);
+    return { topic: "tolk-" + b64u(topicBits), key };
+  }
 
   async function encrypt(obj) {
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -561,14 +731,16 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     return JSON.parse(new TextDecoder().decode(pt));
   }
 
-  const roomHash = (r, role) => "#samtale=" + r.topic + "." + r.keyStr + "." + role;
+  const roomHash = (r, role) => "#kode=" + r.code + "." + role;
   const inviteUrl = () => location.origin + location.pathname + roomHash(room, other(room.role));
 
-  async function joinRoom(topic, keyStr, role) {
+  async function joinRoom(code, role) {
     if (!window.crypto?.subtle) { setStatus("To enheder kræver, at siden åbnes via https.", true); return; }
     leaveRoom(true);
-    const key = await crypto.subtle.importKey("raw", unb64u(keyStr), "AES-GCM", false, ["encrypt", "decrypt"]);
-    room = { topic, keyStr, key, role, since: Math.floor(Date.now() / 1000) - 5, peer: false, state: "wait" };
+    setStatus("Forbinder … / Подключение …");
+    const { topic, key } = await deriveRoom(code);
+    setStatus("");
+    room = { code, topic, key, role, since: Math.floor(Date.now() / 1000) - 5, peer: false, state: "wait" };
     try { history.replaceState(null, "", roomHash(room, role)); } catch {}
     subscribe(room);
     relaySend({ k: "hello", role });
@@ -605,6 +777,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
       const isNew = !r.peer;
       r.peer = true; r.state = "ok";
       if (m.k === "hello") relaySend({ k: "here", role: r.role });
+      if (m.role === r.role) setStatus("Begge computere er sat til samme sprog. Afslut og vælg det andet sprog på den ene. / Оба компьютера настроены на один язык. Отключитесь и выберите другой язык на одном из них.", true);
       renderPair();
       if (isNew) $("pair").hidden = true, $("pairBtn").setAttribute("aria-expanded", "false");
     } else if (m.k === "bye") {
@@ -641,6 +814,16 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     $("pairStart").hidden = on;
     $("pairOn").hidden = !on;
     $("stage").classList.toggle("ru-first", on && room.role === "ru");
+    // Connected: each person has their own screen, so show one chat instead of two facing panels.
+    $("stage").hidden = on;
+    $("chat").hidden = !on;
+    $("logBox").hidden = on;
+    $("flipBtn").hidden = on;
+    $("myMic").hidden = !on;
+    if (on) {
+      $("myMic").className = "mic " + room.role + (rec ? " on" : "");
+      $("myMicLabel").textContent = room.role === "da" ? "Tal dansk" : "Говорить";
+    }
     const state = on ? room.state : "";
     for (const d of [$("hdrDot"), $("pairDot")]) d.className = "dot" + (state ? " " + state : "");
     if (!on) return;
@@ -652,6 +835,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     const url = inviteUrl();
     if ($("inviteLink").value !== url) {
       $("inviteLink").value = url;
+      $("codeText").textContent = fmtCode(room.code);
       const box = $("qr");
       if (window.qrcode) {
         const q = qrcode(0, "M"); q.addData(url); q.make();
@@ -666,18 +850,25 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     $("pair").hidden = !open;
     $("pairBtn").setAttribute("aria-expanded", open);
   };
-  document.querySelectorAll(".roles button").forEach(b => b.onclick = () => joinRoom("tolk-" + randomB64u(12), randomB64u(16), b.dataset.role));
+  document.querySelectorAll("#startRoles button").forEach(b => b.onclick = () => joinRoom(newCode(), b.dataset.role));
+  $("joinForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const code = $("joinCode").value.replace(/\D/g, "");
+    if (code.length !== 8) { setStatus("Koden skal have 8 cifre. / Код должен состоять из 8 цифр.", true); $("joinCode").focus(); return; }
+    $("joinCode").value = "";
+    joinRoom(code, e.submitter?.dataset.role || "da");
+  });
   $("leave").onclick = () => leaveRoom(false);
   $("copyLink").onclick = async () => {
     try { await navigator.clipboard.writeText($("inviteLink").value); setStatus("Linket er kopieret."); }
     catch { $("inviteLink").select(); setStatus("Markér linket og kopiér det."); }
   };
 
-  const joined = location.hash.match(/^#samtale=(tolk-[\w-]+)\.([\w-]+)\.(da|ru)$/);
+  const joined = location.hash.match(/^#kode=(\d{8})\.(da|ru)$/);
   if (joined) {
     $("pair").hidden = false;
     $("pairBtn").setAttribute("aria-expanded", "true");
-    joinRoom(joined[1], joined[2], joined[3]);
+    joinRoom(joined[1], joined[2]);
   }
 
   $("flipBtn").onclick = () => {
@@ -690,6 +881,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     $("daText").className = "text empty"; $("daText").textContent = "Tryk på mikrofonen og tal dansk, eller skriv nedenfor.";
     $("ruText").className = "text empty"; $("ruText").textContent = "Нажмите на микрофон и говорите по-русски или напишите ниже.";
     $("daRole").textContent = $("ruRole").textContent = "";
+    $("chatList").innerHTML = ""; $("chatEmpty").hidden = false;
     setStatus("");
   };
 })();
