@@ -12,7 +12,7 @@
 /* Layout: two facing panels (Danish / Russian) that each show the latest line in their own language; controls in a bar between them. */
 :root {
   --bg: #f3f4f6; --panel: #ffffff; --fg: #1b1f27; --muted: #5d6573; --line: #d9dde4;
-  --da: #b4232f; --da-soft: #fbe9ea; --ru: #1f4fa3; --ru-soft: #e7eefb; --warn: #8a5a00; --warn-soft: #fff3d6;
+  --da: #b4232f; --da-soft: #fbe9ea; --ru: #1f4fa3; --ru-soft: #e7eefb; --warn: #8a5a00; --warn-soft: #fff3d6; --ok: #1f8a4c;
   --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   color-scheme: light;
@@ -20,23 +20,25 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #12151b; --panel: #1b2029; --fg: #e8ebf0; --muted: #9aa3b2; --line: #2d3440;
-    --da: #ff6b74; --da-soft: #3a1d22; --ru: #7aa7ff; --ru-soft: #1b2843; --warn: #ffc865; --warn-soft: #3a2e12;
+    --da: #ff6b74; --da-soft: #3a1d22; --ru: #7aa7ff; --ru-soft: #1b2843; --warn: #ffc865; --warn-soft: #3a2e12; --ok: #4cc98a;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #12151b; --panel: #1b2029; --fg: #e8ebf0; --muted: #9aa3b2; --line: #2d3440;
-  --da: #ff6b74; --da-soft: #3a1d22; --ru: #7aa7ff; --ru-soft: #1b2843; --warn: #ffc865; --warn-soft: #3a2e12;
+  --da: #ff6b74; --da-soft: #3a1d22; --ru: #7aa7ff; --ru-soft: #1b2843; --warn: #ffc865; --warn-soft: #3a2e12; --ok: #4cc98a;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 var(--font);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-bottom, 0px));
 }
-.app { max-width: 1100px; margin: 0 auto; min-height: 100%; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; }
+.app { max-width: 1100px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; gap: 12px; }
+.app > .stage { flex: 1 0 auto; }
 header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 h1 { font-size: 1.15rem; font-weight: 600; margin: 0; letter-spacing: .01em; }
 h1 span { color: var(--muted); font-weight: 400; }
@@ -105,6 +107,25 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
 .check { display: flex; align-items: center; gap: 8px; font-size: .95rem; cursor: pointer; }
 .check input { flex: none; width: 18px; height: 18px; margin: 0; }
 .hint { grid-column: 1 / -1; font-size: .82rem; color: var(--muted); margin: 0; max-width: 75ch; }
+
+/* two devices */
+.pbox { display: grid; gap: 12px; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--line); margin-right: 8px; vertical-align: 1px; }
+.dot.ok { background: var(--ok); } .dot.wait { background: var(--warn); } .dot.err { background: var(--da); }
+.pair { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; }
+.pair p { margin: 0; max-width: 65ch; }
+.pair .lead { font-weight: 500; }
+.pair .lead span { display: block; color: var(--muted); font-weight: 400; }
+.roles { display: flex; gap: 8px; flex-wrap: wrap; }
+.roles button { flex: 1 1 200px; border: 0; border-radius: 999px; padding: 14px 18px; font-weight: 600; color: #fff; }
+.roles .da { background: var(--da); } .roles .ru { background: var(--ru); }
+.pstate { font-weight: 500; }
+.invite { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.qr { background: #fff; padding: 8px; border-radius: 8px; line-height: 0; }
+.qr svg, .qr img { width: 168px; height: 168px; display: block; }
+.inv { flex: 1 1 260px; min-width: 0; display: grid; gap: 8px; }
+.inv input { width: 100%; font: .85rem var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.stage.ru-first .panel.ru { order: -1; }
 </style>
 </head>
 <body>
@@ -113,9 +134,36 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     <h1>Tolk <span>dansk ⇄ русский</span></h1>
     <div class="tools">
       <button class="ghost" id="flipBtn" aria-pressed="false" title="Vend det russiske felt, så personen overfor kan læse det">Vend RU-felt</button>
+      <button class="ghost" id="pairBtn" aria-expanded="false"><span class="dot" id="hdrDot"></span>To enheder</button>
       <button class="ghost" id="clearBtn">Ryd</button>
     </div>
   </header>
+
+  <section class="pair" id="pair" hidden aria-label="To enheder">
+    <div id="pairStart" class="pbox">
+      <p class="lead">Brug to enheder, så hver person har sin egen telefon.<span lang="ru">Два устройства: у каждого свой телефон.</span></p>
+      <p>Hvem bruger denne enhed? / <span lang="ru">Кто пользуется этим устройством?</span></p>
+      <div class="roles">
+        <button type="button" class="da" data-role="da">Jeg taler dansk</button>
+        <button type="button" class="ru" data-role="ru" lang="ru">Я говорю по-русски</button>
+      </div>
+      <p class="hint">Beskederne sendes krypteret gennem den gratis open source-tjeneste ntfy.sh. Nøglen ligger kun i linket, så kun enheder med linket kan læse dem.</p>
+    </div>
+    <div id="pairOn" class="pbox" hidden>
+      <div class="pstate"><span class="dot" id="pairDot"></span><span id="pairText"></span></div>
+      <div class="invite">
+        <div class="qr" id="qr" hidden></div>
+        <div class="inv">
+          <p>Scan koden med den anden telefon, eller send linket til den.<br><span lang="ru">Отсканируйте код другим телефоном или откройте ссылку.</span></p>
+          <input id="inviteLink" readonly aria-label="Link til den anden enhed">
+          <div class="pf">
+            <button type="button" class="ghost" id="copyLink">Kopiér link</button>
+            <button type="button" class="ghost" id="leave">Afslut forbindelse / Отключиться</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <main class="stage" id="stage">
     <section class="panel da" aria-label="Dansk">
@@ -191,6 +239,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   </div>
 </div>
 
+<script src="qrcode.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -307,7 +356,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
 
   // ---------- UI ----------
   let last = { da: "", ru: "" };
-  function show(srcLang, src, dst, unsure) {
+  function show(srcLang, src, dst, unsure, remote) {
     const tl = other(srcLang);
     last[srcLang] = src; last[tl] = dst;
     setPanel(srcLang, src, false);
@@ -315,7 +364,9 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     $(srcLang + "Role").textContent = srcLang === "da" ? "original" : "оригинал";
     $(tl + "Role").textContent = tl === "da" ? "oversat" : "перевод";
     addLog(srcLang, src, dst, unsure);
-    if (opt("autoSpeak")) speak(unsure ? dst + " " + CONFIRM : dst, tl);
+    // With two devices, the translation is read aloud only on the device of the person it is for.
+    if (opt("autoSpeak") && (!room || room.role === tl)) speak(unsure ? dst + " " + CONFIRM : dst, tl);
+    if (room && !remote) relaySend({ k: "msg", srcLang, src, dst, unsure });
   }
   function setPanel(lang, text, unsure, interim) {
     const el = $(lang + "Text");
@@ -486,6 +537,148 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   $("input").addEventListener("keydown", e => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("compose").requestSubmit(); }
   });
+
+  // ---------- two devices ----------
+  // Messages go through the free, open-source relay ntfy.sh, encrypted with AES-GCM. The key lives
+  // only in the link's #fragment, which the browser never sends to any server.
+  const RELAY = "https://ntfy.sh/";
+  const myId = Math.random().toString(36).slice(2, 10);
+  const seen = new Set();
+  let room = null; // { topic, keyStr, key, role, es, since, peer, state }
+
+  const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+  const randomB64u = n => b64u(crypto.getRandomValues(new Uint8Array(n)));
+
+  async function encrypt(obj) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, room.key, new TextEncoder().encode(JSON.stringify(obj)));
+    return b64u(iv) + "." + b64u(ct);
+  }
+  async function decrypt(str, key) {
+    const [iv, ct] = str.split(".");
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64u(iv) }, key, unb64u(ct));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }
+
+  const roomHash = (r, role) => "#samtale=" + r.topic + "." + r.keyStr + "." + role;
+  const inviteUrl = () => location.origin + location.pathname + roomHash(room, other(room.role));
+
+  async function joinRoom(topic, keyStr, role) {
+    if (!window.crypto?.subtle) { setStatus("To enheder kræver, at siden åbnes via https.", true); return; }
+    leaveRoom(true);
+    const key = await crypto.subtle.importKey("raw", unb64u(keyStr), "AES-GCM", false, ["encrypt", "decrypt"]);
+    room = { topic, keyStr, key, role, since: Math.floor(Date.now() / 1000) - 5, peer: false, state: "wait" };
+    try { history.replaceState(null, "", roomHash(room, role)); } catch {}
+    subscribe(room);
+    relaySend({ k: "hello", role });
+    renderPair();
+  }
+
+  function subscribe(r) {
+    if (room !== r) return;
+    const es = r.es = new EventSource(RELAY + r.topic + "/sse?since=" + encodeURIComponent(r.since));
+    es.onopen = () => {
+      clearTimeout(r.downTimer); r.downTimer = null;
+      if (room === r && r.state === "err") { r.state = r.peer ? "ok" : "wait"; renderPair(); }
+    };
+    es.onmessage = e => onRelay(r, e.data);
+    es.onerror = () => {
+      es.close();
+      if (room !== r) return;
+      // Short drops are normal on phones; only report a problem if reconnecting takes a while.
+      r.downTimer ??= setTimeout(() => { if (room === r) { r.state = "err"; renderPair(); } }, 8000);
+      setTimeout(() => subscribe(r), 3000);
+    };
+  }
+
+  async function onRelay(r, data) {
+    let j;
+    try { j = JSON.parse(data); } catch { return; }
+    if (j.event !== "message" || seen.has(j.id)) return;
+    seen.add(j.id);
+    r.since = j.id;
+    let m;
+    try { m = await decrypt(j.message, r.key); } catch { return; }
+    if (room !== r || m.from === myId) return;
+    if (m.k === "hello" || m.k === "here") {
+      const isNew = !r.peer;
+      r.peer = true; r.state = "ok";
+      if (m.k === "hello") relaySend({ k: "here", role: r.role });
+      renderPair();
+      if (isNew) $("pair").hidden = true, $("pairBtn").setAttribute("aria-expanded", "false");
+    } else if (m.k === "bye") {
+      r.peer = false; r.state = "wait"; renderPair();
+    } else if (m.k === "msg") {
+      show(m.srcLang, m.src, m.dst, m.unsure, true);
+    }
+  }
+
+  async function relaySend(obj) {
+    if (!room) return;
+    const r = room;
+    try {
+      const body = await encrypt({ ...obj, from: myId });
+      if (body.length > 3800) { setStatus("Beskeden er for lang til at sende til den anden enhed. Del den op.", true); return; }
+      const res = await fetch(RELAY + r.topic, { method: "POST", body });
+      if (!res.ok) throw new Error(res.status);
+    } catch (e) {
+      if (room === r) setStatus("Kunne ikke sende til den anden enhed (" + e.message + "). Tjek internetforbindelsen.", true);
+    }
+  }
+
+  function leaveRoom(silent) {
+    if (!room) return;
+    if (!silent) relaySend({ k: "bye" });
+    room.es?.close();
+    room = null;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+    renderPair();
+  }
+
+  function renderPair() {
+    const on = !!room;
+    $("pairStart").hidden = on;
+    $("pairOn").hidden = !on;
+    $("stage").classList.toggle("ru-first", on && room.role === "ru");
+    const state = on ? room.state : "";
+    for (const d of [$("hdrDot"), $("pairDot")]) d.className = "dot" + (state ? " " + state : "");
+    if (!on) return;
+    $("pairText").textContent = {
+      ok: "Forbundet med den anden enhed / Подключено",
+      wait: "Venter på den anden enhed … / Ожидание второго устройства …",
+      err: "Forbindelsen er afbrudt. Prøver igen … / Нет связи. Повторная попытка …"
+    }[state];
+    const url = inviteUrl();
+    if ($("inviteLink").value !== url) {
+      $("inviteLink").value = url;
+      const box = $("qr");
+      if (window.qrcode) {
+        const q = qrcode(0, "M"); q.addData(url); q.make();
+        box.innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+        box.hidden = false;
+      } else box.hidden = true;
+    }
+  }
+
+  $("pairBtn").onclick = () => {
+    const open = $("pair").hidden;
+    $("pair").hidden = !open;
+    $("pairBtn").setAttribute("aria-expanded", open);
+  };
+  document.querySelectorAll(".roles button").forEach(b => b.onclick = () => joinRoom("tolk-" + randomB64u(12), randomB64u(16), b.dataset.role));
+  $("leave").onclick = () => leaveRoom(false);
+  $("copyLink").onclick = async () => {
+    try { await navigator.clipboard.writeText($("inviteLink").value); setStatus("Linket er kopieret."); }
+    catch { $("inviteLink").select(); setStatus("Markér linket og kopiér det."); }
+  };
+
+  const joined = location.hash.match(/^#samtale=(tolk-[\w-]+)\.([\w-]+)\.(da|ru)$/);
+  if (joined) {
+    $("pair").hidden = false;
+    $("pairBtn").setAttribute("aria-expanded", "true");
+    joinRoom(joined[1], joined[2], joined[3]);
+  }
 
   $("flipBtn").onclick = () => {
     const on = $("app").classList.toggle("flip");

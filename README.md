@@ -13,6 +13,12 @@ En lille webapp, der tolker mellem dansk og russisk med tale og tekst, uden AI.
 - "Vend RU-felt" vender det russiske felt, så personen overfor kan læse det.
 - Hvis tal i oversættelsen ikke stemmer med originalen, tilføjes "(Bør bekræftes / Нужно уточнить)".
 
+## To enheder
+
+Tryk "To enheder", vælg hvem der bruger telefonen, og scan QR-koden (eller send linket) med den anden telefon. Hver person taler i sin egen telefon, og oversættelsen vises og læses højt på den andens.
+
+Beskederne sendes gennem den gratis open source-tjeneste [ntfy.sh](https://ntfy.sh), krypteret med AES-GCM. Nøglen ligger kun i linkets `#`-del, som browseren aldrig sender til nogen server, så kun enheder med linket kan læse samtalen.
+
 ## Oversættelseskilder
 
 Vælges under Indstillinger. Hvis den valgte fejler, prøves en anden automatisk.
@@ -24,3 +30,7 @@ Vælges under Indstillinger. Hvis den valgte fejler, prøves en anden automatisk
 ## Krav
 
 Talegenkendelse kræver Chrome, Edge eller Safari og internetforbindelse. Oplæsning bruger som standard Googles online-stemme. En stemme på enheden kan vælges i stedet. Stemmen kan vælges og afprøves under Indstillinger.
+
+## Tredjepartskode
+
+`qrcode.js` er QR Code Generator af Kazuhiko Arase (MIT-licens).
