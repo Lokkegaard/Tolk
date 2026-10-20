@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tolk DA ⇄ RU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: two facing panels (Danish / Russian) that each show the latest line in their own language; controls in a bar between them. */
+:root {
+  --bg: #f3f4f6; --panel: #ffffff; --fg: #1b1f27; --muted: #5d6573; --line: #d9dde4;
+  --da: #b4232f; --da-soft: #fbe9ea; --ru: #1f4fa3; --ru-soft: #e7eefb; --warn: #8a5a00; --warn-soft: #fff3d6;
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151b; --panel: #1b2029; --fg: #e8ebf0; --muted: #9aa3b2; --line: #2d3440;
+    --da: #ff6b74; --da-soft: #3a1d22; --ru: #7aa7ff; --ru-soft: #1b2843; --warn: #ffc865; --warn-soft: #3a2e12;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151b; --panel: #1b2029; --fg: #e8ebf0; --muted: #9aa3b2; --line: #2d3440;
+  --da: #ff6b74; --da-soft: #3a1d22; --ru: #7aa7ff; --ru-soft: #1b2843; --warn: #ffc865; --warn-soft: #3a2e12;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-bottom, 0px));
+}
+.app { max-width: 1100px; margin: 0 auto; min-height: 100%; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-size: 1.15rem; font-weight: 600; margin: 0; letter-spacing: .01em; }
+h1 span { color: var(--muted); font-weight: 400; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid color-mix(in srgb, var(--ru) 55%, transparent); outline-offset: 2px; }
+.ghost { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; font-size: .9rem; }
+.ghost[aria-pressed="true"] { border-color: var(--fg); }
+
+.stage { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 0; }
+@media (max-width: 760px) { .stage { grid-template-columns: 1fr; } }
+.panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+  display: grid; grid-template-rows: auto 1fr auto; gap: 12px; min-height: 240px; min-width: 0;
+  border-top: 4px solid var(--c);
+}
+.panel.da { --c: var(--da); --soft: var(--da-soft); }
+.panel.ru { --c: var(--ru); --soft: var(--ru-soft); }
+.flip .panel.ru { transform: rotate(180deg); }
+.ph { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.lang { font-weight: 600; color: var(--c); letter-spacing: .06em; text-transform: uppercase; font-size: .8rem; }
+.role { font: .75rem var(--mono); color: var(--muted); }
+.text { font-size: clamp(1.25rem, 2.6vw, 1.9rem); line-height: 1.35; overflow-wrap: anywhere; min-width: 0; }
+.text.interim { color: var(--muted); font-style: italic; }
+.text.empty { color: var(--muted); font-size: 1.05rem; }
+.note { display: block; margin-top: 10px; font-size: .95rem; background: var(--warn-soft); color: var(--warn); border-radius: 8px; padding: 6px 10px; }
+.pf { display: flex; gap: 8px; flex-wrap: wrap; }
+.mic {
+  flex: 1 1 180px; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--c); color: #fff; border: 0; border-radius: 999px; padding: 14px 18px; font-weight: 600; font-size: 1rem;
+}
+.mic svg { width: 20px; height: 20px; }
+.mic.on { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--c) 25%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .mic.on { animation: none; outline: 3px solid var(--c); outline-offset: 3px; } }
+.say { background: var(--soft); color: var(--c); border: 0; border-radius: 999px; padding: 14px 16px; font-weight: 500; }
+
+.dock { display: grid; gap: 10px; }
+form.compose { display: flex; gap: 8px; }
+textarea {
+  flex: 1; min-width: 0; resize: vertical; min-height: 52px; font: inherit; color: var(--fg); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+}
+.send { background: var(--fg); color: var(--bg); border: 0; border-radius: 10px; padding: 0 20px; font-weight: 600; }
+.status { font: .8rem var(--mono); color: var(--muted); min-height: 1.2em; }
+.status.err { color: var(--da); }
+
+details { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
+.log { list-style: none; margin: 0; padding: 0 14px 12px; display: grid; gap: 8px; max-height: 40vh; overflow: auto; }
+.log li { display: grid; grid-template-columns: 2.4rem 1fr; gap: 2px 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.log .tag { font: 600 .72rem var(--mono); grid-row: span 2; padding-top: 3px; }
+.log .tag.da { color: var(--da); } .log .tag.ru { color: var(--ru); }
+.log .src { color: var(--muted); font-size: .9rem; } .log .dst { overflow-wrap: anywhere; }
+.settings { padding: 0 14px 14px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.settings label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+.settings select, .settings input[type=text], .settings input[type=url] {
+  font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px;
+}
+.check { display: flex !important; align-items: center; gap: 8px; color: var(--fg) !important; }
+.hint { grid-column: 1 / -1; font-size: .82rem; color: var(--muted); margin: 0; max-width: 75ch; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <h1>Tolk <span>dansk ⇄ русский</span></h1>
+    <div class="tools">
+      <button class="ghost" id="flipBtn" aria-pressed="false" title="Vend det russiske felt, så personen overfor kan læse det">Vend RU-felt</button>
+      <button class="ghost" id="clearBtn">Ryd</button>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <section class="panel da" aria-label="Dansk">
+      <div class="ph"><span class="lang">Dansk</span><span class="role" id="daRole"></span></div>
+      <div class="text empty" id="daText" aria-live="polite">Tryk på mikrofonen og tal dansk, eller skriv nedenfor.</div>
+      <div class="pf">
+        <button class="mic" id="daMic" data-lang="da"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Tal dansk</span></button>
+        <button class="say" id="daSay" title="Læs højt">Læs op</button>
+      </div>
+    </section>
+    <section class="panel ru" aria-label="Русский" lang="ru">
+      <div class="ph"><span class="lang">Русский</span><span class="role" id="ruRole"></span></div>
+      <div class="text empty" id="ruText" aria-live="polite">Нажмите на микрофон и говорите по-русски или напишите ниже.</div>
+      <div class="pf">
+        <button class="mic" id="ruMic" data-lang="ru"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Говорить</span></button>
+        <button class="say" id="ruSay" title="Прочитать вслух">Озвучить</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="dock">
+    <form class="compose" id="compose">
+      <textarea id="input" rows="2" placeholder="Skriv på dansk eller russisk … / Пишите по-датски или по-русски …"></textarea>
+      <button class="send" type="submit">Oversæt</button>
+    </form>
+    <div class="status" id="status" role="status"></div>
+    <details id="logBox">
+      <summary>Samtale (<span id="logCount">0</span>)</summary>
+      <ol class="log" id="log"></ol>
+    </details>
+    <details>
+      <summary>Indstillinger</summary>
+      <div class="settings">
+        <label>Oversættelseskilde
+          <select id="provider">
+            <option value="google">Google Translate (gratis, uden nøgle)</option>
+            <option value="mymemory">MyMemory (gratis, uden nøgle)</option>
+            <option value="libre">LibreTranslate (open source, egen server)</option>
+          </select>
+        </label>
+        <label>LibreTranslate-adresse
+          <input type="url" id="libreUrl" placeholder="http://localhost:5000">
+        </label>
+        <label>LibreTranslate API-nøgle (valgfri)
+          <input type="text" id="libreKey" autocomplete="off">
+        </label>
+        <label>E-mail til MyMemory (valgfri, giver større dagskvote)
+          <input type="text" id="mmEmail" autocomplete="off">
+        </label>
+        <label class="check"><input type="checkbox" id="autoSpeak" checked> Læs oversættelsen højt automatisk</label>
+        <label class="check"><input type="checkbox" id="fallback" checked> Prøv en anden kilde, hvis den valgte fejler</label>
+        <p class="hint">Sproget genkendes automatisk: kyrillisk skrift oversættes til dansk, alt andet til russisk. En besked med begge sprog oversættes sætning for sætning. Hvis tal i oversættelsen ikke stemmer med originalen, eller en sætning kommer uoversat tilbage, tilføjes en note om at det bør bekræftes. Talegenkendelse kræver Chrome, Edge eller Safari.</p>
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const LANG = { da: { tts: "da-DK", name: "Dansk" }, ru: { tts: "ru-RU", name: "Русский" } };
+  const other = l => (l === "da" ? "ru" : "da");
+  const CONFIRM = "(Bør bekræftes / Нужно уточнить)";
+
+  // ---------- settings ----------
+  const S_KEYS = ["provider", "libreUrl", "libreKey", "mmEmail", "autoSpeak", "fallback"];
+  const store = {
+    get(k) { try { return localStorage.getItem("tolk." + k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem("tolk." + k, v); } catch {} }
+  };
+  for (const k of S_KEYS) {
+    const el = $(k), v = store.get(k);
+    if (v !== null) el.type === "checkbox" ? (el.checked = v === "1") : (el.value = v);
+    el.addEventListener("change", () => store.set(k, el.type === "checkbox" ? (el.checked ? "1" : "0") : el.value));
+  }
+  const opt = k => ($(k).type === "checkbox" ? $(k).checked : $(k).value.trim());
+
+  // ---------- language detection ----------
+  const countCyr = s => (s.match(/[Ѐ-ӿ]/g) || []).length;
+  const countLat = s => (s.match(/[A-Za-zÀ-ÿ]/g) || []).length;
+  const detect = s => (countCyr(s) > countLat(s) ? "ru" : "da");
+
+  // Split into sentences, tag each by script, and merge neighbours in the same language (rule 9).
+  function segments(text) {
+    const parts = text.match(/[^.!?…\n]+[.!?…]*[\s\n]*|[\s\n]+/g) || [text];
+    const out = [];
+    for (const p of parts) {
+      const letters = countCyr(p) + countLat(p);
+      const lang = letters ? detect(p) : (out.length ? out[out.length - 1].lang : detect(text));
+      const last = out[out.length - 1];
+      if (last && last.lang === lang) last.text += p; else out.push({ lang, text: p });
+    }
+    return out.filter(s => s.text.trim());
+  }
+
+  // ---------- providers ----------
+  async function google(q, sl, tl) {
+    const u = "https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=" + sl + "&tl=" + tl + "&q=" + encodeURIComponent(q);
+    const r = await fetch(u);
+    if (!r.ok) throw new Error("Google svarede " + r.status);
+    const j = await r.json();
+    return j[0].map(x => x[0]).join("");
+  }
+  async function mymemory(q, sl, tl) {
+    // MyMemory accepts up to ~500 bytes per request, so translate long text in sentence chunks.
+    const chunks = [];
+    let cur = "";
+    for (const s of q.match(/[^.!?…]+[.!?…]*\s*/g) || [q]) {
+      if (new Blob([cur + s]).size > 450 && cur) { chunks.push(cur); cur = ""; }
+      cur += s;
+    }
+    if (cur) chunks.push(cur);
+    const res = [];
+    for (const c of chunks) {
+      let u = "https://api.mymemory.translated.net/get?langpair=" + sl + "|" + tl + "&q=" + encodeURIComponent(c);
+      if (opt("mmEmail")) u += "&de=" + encodeURIComponent(opt("mmEmail"));
+      const r = await fetch(u);
+      const j = await r.json();
+      if (j.responseStatus != 200 || j.quotaFinished) throw new Error("MyMemory: " + (j.responseDetails || "fejl"));
+      res.push(j.responseData.translatedText);
+    }
+    return res.join(" ");
+  }
+  async function libre(q, sl, tl) {
+    const base = (opt("libreUrl") || "http://localhost:5000").replace(/\/+$/, "");
+    const body = { q, source: sl, target: tl, format: "text" };
+    if (opt("libreKey")) body.api_key = opt("libreKey");
+    const r = await fetch(base + "/translate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok || j.error) throw new Error("LibreTranslate: " + (j.error || r.status));
+    return j.translatedText;
+  }
+  const PROVIDERS = { google, mymemory, libre };
+
+  async function translateText(q, sl, tl) {
+    const first = opt("provider");
+    const order = [first].concat(opt("fallback") ? ["google", "mymemory"].filter(p => p !== first) : []);
+    let lastErr;
+    for (const p of order) {
+      try { return await PROVIDERS[p](q, sl, tl); } catch (e) { lastErr = e; }
+    }
+    throw lastErr;
+  }
+
+  // ---------- checks (rules 6 and 8) ----------
+  const digits = s => (s.match(/\d/g) || []).sort().join("");
+  function needsConfirm(src, dst) {
+    const a = src.trim(), b = dst.trim();
+    if (digits(a) !== digits(b)) return true;
+    if (a.length > 3 && a.toLowerCase() === b.toLowerCase()) return true;
+    return false;
+  }
+  const clean = s => s.replace(/^["'«»„“”]+|["'«»„“”]+$/g, "").replace(/\s+/g, " ").trim();
+
+  async function interpret(text) {
+    text = text.trim();
+    if (!text) return;
+    setStatus("Oversætter …");
+    const segs = segments(text);
+    try {
+      const results = await Promise.all(segs.map(s => translateText(s.text.trim(), s.lang, other(s.lang))));
+      const translated = clean(results.join(" "));
+      const unsure = segs.some((s, i) => needsConfirm(s.text, results[i]));
+      const srcLang = segs.length === 1 ? segs[0].lang : detect(text);
+      show(srcLang, text, translated, unsure);
+      setStatus("");
+    } catch (e) {
+      setStatus("Kunne ikke oversætte: " + e.message + ". Tjek internetforbindelsen eller vælg en anden kilde under Indstillinger.", true);
+    }
+  }
+
+  // ---------- UI ----------
+  let last = { da: "", ru: "" };
+  function show(srcLang, src, dst, unsure) {
+    const tl = other(srcLang);
+    last[srcLang] = src; last[tl] = dst;
+    setPanel(srcLang, src, false);
+    setPanel(tl, dst, unsure);
+    $(srcLang + "Role").textContent = srcLang === "da" ? "original" : "оригинал";
+    $(tl + "Role").textContent = tl === "da" ? "oversat" : "перевод";
+    addLog(srcLang, src, dst, unsure);
+    if (opt("autoSpeak")) speak(unsure ? dst + " " + CONFIRM : dst, tl);
+  }
+  function setPanel(lang, text, unsure, interim) {
+    const el = $(lang + "Text");
+    el.className = "text" + (interim ? " interim" : "");
+    el.textContent = text;
+    if (unsure) { const n = document.createElement("span"); n.className = "note"; n.textContent = CONFIRM; el.appendChild(n); }
+  }
+  function addLog(srcLang, src, dst, unsure) {
+    const li = document.createElement("li");
+    li.innerHTML = '<span class="tag ' + srcLang + '">' + srcLang.toUpperCase() + "→" + other(srcLang).toUpperCase() + '</span><span class="src"></span><span class="dst"></span>';
+    li.querySelector(".src").textContent = src;
+    li.querySelector(".dst").textContent = dst + (unsure ? " " + CONFIRM : "");
+    $("log").prepend(li);
+    $("logCount").textContent = $("log").children.length;
+  }
+  function setStatus(msg, err) { const s = $("status"); s.textContent = msg; s.className = "status" + (err ? " err" : ""); }
+
+  // ---------- text to speech ----------
+  function speak(text, lang) {
+    if (!("speechSynthesis" in window) || !text) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = LANG[lang].tts;
+    const v = speechSynthesis.getVoices().find(v => v.lang.replace("_", "-").toLowerCase().startsWith(lang));
+    if (v) u.voice = v;
+    else setStatus("Ingen " + LANG[lang].name.toLowerCase() + " stemme fundet på enheden. Installér en i systemets taleindstillinger.", true);
+    speechSynthesis.speak(u);
+  }
+  if ("speechSynthesis" in window) speechSynthesis.getVoices();
+  $("daSay").onclick = () => speak(last.da, "da");
+  $("ruSay").onclick = () => speak(last.ru, "ru");
+
+  // ---------- speech recognition ----------
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null, recLang = null;
+  function stopRec() { if (rec) { rec.stop(); } }
+  function startRec(lang) {
+    if (!SR) { setStatus("Talegenkendelse understøttes ikke i denne browser. Brug Chrome, Edge eller Safari, eller skriv i feltet.", true); return; }
+    if (rec) { const was = recLang; stopRec(); if (was === lang) return; }
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    rec = new SR();
+    recLang = lang;
+    rec.lang = LANG[lang].tts;
+    rec.interimResults = true;
+    rec.continuous = false;
+    let finalText = "";
+    const btn = $(lang + "Mic");
+    btn.classList.add("on");
+    setStatus(lang === "da" ? "Lytter (dansk) …" : "Слушаю (русский) …");
+    rec.onresult = e => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += t; else interim += t;
+      }
+      setPanel(lang, finalText + interim, false, true);
+    };
+    rec.onerror = e => {
+      const msg = { "not-allowed": "Mikrofonen er blokeret. Giv browseren adgang til mikrofonen.", "no-speech": "Hørte ingen tale. Prøv igen.", "network": "Talegenkendelsen kræver internetforbindelse." }[e.error] || "Fejl i talegenkendelse: " + e.error;
+      setStatus(msg, true);
+    };
+    rec.onend = () => {
+      btn.classList.remove("on");
+      rec = null; recLang = null;
+      if (finalText.trim()) interpret(finalText);
+      else if ($("status").textContent.startsWith("Lytter") || $("status").textContent.startsWith("Слушаю")) setStatus("");
+    };
+    rec.start();
+  }
+  $("daMic").onclick = () => startRec("da");
+  $("ruMic").onclick = () => startRec("ru");
+
+  // ---------- text input ----------
+  $("compose").addEventListener("submit", e => {
+    e.preventDefault();
+    const v = $("input").value;
+    $("input").value = "";
+    interpret(v);
+  });
+  $("input").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("compose").requestSubmit(); }
+  });
+
+  $("flipBtn").onclick = () => {
+    const on = $("app").classList.toggle("flip");
+    $("flipBtn").setAttribute("aria-pressed", on);
+  };
+  $("clearBtn").onclick = () => {
+    last = { da: "", ru: "" };
+    $("log").innerHTML = ""; $("logCount").textContent = "0";
+    $("daText").className = "text empty"; $("daText").textContent = "Tryk på mikrofonen og tal dansk, eller skriv nedenfor.";
+    $("ruText").className = "text empty"; $("ruText").textContent = "Нажмите на микрофон и говорите по-русски или напишите ниже.";
+    $("daRole").textContent = $("ruRole").textContent = "";
+    setStatus("");
+  };
+})();
+</script>
+</body>
+</html>
