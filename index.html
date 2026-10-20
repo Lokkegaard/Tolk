@@ -138,7 +138,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
 
 /* chat view, used when two devices are connected */
 .app > .chat { flex: 1 0 auto; }
-.chat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-height: 45vh; max-height: 62vh; overflow-y: auto; display: flex; flex-direction: column; }
+.chat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-height: 40vh; min-height: 40dvh; max-height: 62vh; max-height: 62dvh; overflow-y: auto; display: flex; flex-direction: column; }
 .chatEmpty { margin: auto; text-align: center; color: var(--muted); max-width: 52ch; }
 .chatList { list-style: none; margin: auto 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .msg { max-width: min(85%, 62ch); padding: 10px 14px; border-radius: 14px; display: grid; gap: 4px; min-width: 0; }
@@ -156,6 +156,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   .compose .mic { flex: 1 1 100%; padding: 12px 18px; }
 }
 .mic.da { --c: var(--da); } .mic.ru { --c: var(--ru); }
+.soundBtn { justify-self: start; border: 0; border-radius: 999px; padding: 12px 18px; font-weight: 600; background: var(--warn-soft); color: var(--warn); }
 .keys { margin: 0; font-size: .8rem; color: var(--muted); }
 kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); color: var(--fg); }
 @media (hover: none), (pointer: coarse) { .keys { display: none; } }
@@ -174,11 +175,11 @@ kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-wid
 
   <section class="pair" id="pair" hidden aria-label="To enheder">
     <div id="pairStart" class="pbox">
-      <p class="lead">Brug to computere, så hver person har sin egen.<span lang="ru">Два компьютера: у каждого свой.</span></p>
+      <p class="lead">Brug to enheder (computer, iPad eller telefon), så hver person har sin egen.<span lang="ru">Два устройства (компьютер, iPad или телефон): у каждого своё.</span></p>
       <div class="pgrid">
         <div class="pbox">
           <p class="ptitle">Start en samtale / <span lang="ru">Начать разговор</span></p>
-          <p>Hvem bruger denne computer? / <span lang="ru">Кто пользуется этим компьютером?</span></p>
+          <p>Hvem bruger denne enhed? / <span lang="ru">Кто пользуется этим устройством?</span></p>
           <div class="roles" id="startRoles">
             <button type="button" class="da" data-role="da">Jeg taler dansk</button>
             <button type="button" class="ru" data-role="ru" lang="ru">Я говорю по-русски</button>
@@ -244,6 +245,7 @@ kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-wid
       <button class="send" type="submit">Oversæt</button>
     </form>
     <p class="keys">Hold <kbd>mellemrum</kbd> nede for at tale · <kbd>Enter</kbd> sender · <kbd>Esc</kbd> stopper oplæsning<br><span lang="ru">Удерживайте <kbd>пробел</kbd>, чтобы говорить · <kbd>Enter</kbd> отправляет · <kbd>Esc</kbd> останавливает озвучку</span></p>
+    <button type="button" class="soundBtn" id="soundBtn" hidden>Tryk for at høre beskeden / <span lang="ru">Нажмите, чтобы прослушать</span></button>
     <div class="status" id="status" role="status"></div>
     <details id="logBox">
       <summary>Samtale (<span id="logCount">0</span>)</summary>
@@ -300,7 +302,7 @@ kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-wid
             <input type="text" id="mmEmail" autocomplete="off">
           </div>
         </fieldset>
-        <p class="hint">Sproget genkendes automatisk: kyrillisk skrift oversættes til dansk, alt andet til russisk. En besked med begge sprog oversættes sætning for sætning. Hvis tal i oversættelsen ikke stemmer med originalen, eller en sætning kommer uoversat tilbage, tilføjes en note om at det bør bekræftes. Talegenkendelse kræver Chrome, Edge eller Safari. Oplæsningen bruger som standard Googles online-stemme. Vælg "Automatisk" eller en bestemt stemme for at bruge en stemme, der er installeret på enheden.</p>
+        <p class="hint">Sproget genkendes automatisk: kyrillisk skrift oversættes til dansk, alt andet til russisk. En besked med begge sprog oversættes sætning for sætning. Hvis tal i oversættelsen ikke stemmer med originalen, eller en sætning kommer uoversat tilbage, tilføjes en note om at det bør bekræftes. Talegenkendelse kræver Chrome, Edge eller Safari. Brug Safari på iPhone og iPad. Oplæsningen bruger som standard Googles online-stemme. Vælg "Automatisk" eller en bestemt stemme for at bruge en stemme, der er installeret på enheden.</p>
       </div>
     </details>
   </div>
@@ -549,15 +551,36 @@ kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-wid
     if (audio) { audio.pause(); audio = null; }
   }
 
+  // iPhone and iPad only play sound from an element that was first started by a tap, and a message
+  // from the other device arrives without one. So reuse a single element and unlock it on the first
+  // touch or key press; if sound is still refused, offer a button to play the message.
+  const player = new Audio();
+  const SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+  let unlocked = false, pendingSound = null;
+  function unlockAudio() {
+    if (unlocked) return;
+    unlocked = true;
+    player.src = SILENT;
+    player.play().catch(() => { unlocked = false; });
+    if (hasSynth) speechSynthesis.speak(new SpeechSynthesisUtterance(""));
+  }
+  ["pointerdown", "touchend", "keydown"].forEach(t => document.addEventListener(t, unlockAudio, { capture: true }));
+
   async function playOnline(parts, lang, token, synthFallback) {
     if (hasSynth) speechSynthesis.cancel();
     for (const p of parts) {
       if (token !== speakToken) return;
-      const a = audio = new Audio("https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=" + lang + "&q=" + encodeURIComponent(p));
+      const a = audio = player;
+      a.src = "https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=" + lang + "&q=" + encodeURIComponent(p);
       const done = new Promise((res, rej) => { a.onended = res; a.onerror = rej; });
       try { await a.play(); await done; }
-      catch {
+      catch (e) {
         if (token !== speakToken) return;
+        if (e?.name === "NotAllowedError") {
+          pendingSound = { parts, lang };
+          $("soundBtn").hidden = false;
+          return;
+        }
         // Last resort: the browser's own voice for the language, even an online one.
         const v = synthFallback && matching(lang)[0];
         if (v) return speakWith(v, parts, lang, token, false);
@@ -569,6 +592,7 @@ kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-wid
 
   async function speak(text, lang) {
     stopSpeaking();
+    $("soundBtn").hidden = true; pendingSound = null;
     if (!text) return;
     const token = speakToken, parts = pieces(text), voice = pickVoice(lang);
     if (voice === "online") return playOnline(parts, lang, token, true);
@@ -594,6 +618,14 @@ kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-wid
     utterances.forEach(u => speechSynthesis.speak(u));
   }
 
+  $("soundBtn").onclick = () => {
+    $("soundBtn").hidden = true;
+    unlocked = true;
+    const p = pendingSound;
+    pendingSound = null;
+    stopSpeaking();
+    if (p) playOnline(p.parts, p.lang, speakToken, true); // starts playing inside this tap
+  };
   $("daSay").onclick = () => speak(last.da, "da");
   $("ruSay").onclick = () => speak(last.ru, "ru");
   $("daTest").onclick = () => speak("Goddag. Hvordan går det?", "da");
@@ -744,11 +776,31 @@ kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-wid
     try { history.replaceState(null, "", roomHash(room, role)); } catch {}
     subscribe(room);
     relaySend({ k: "hello", role });
+    keepAwake(true);
     renderPair();
   }
 
+  // Keep a phone or tablet screen on while connected, so it doesn't sleep in the middle of a conversation.
+  let wakeLock = null;
+  async function keepAwake(on) {
+    try {
+      if (on && !wakeLock && "wakeLock" in navigator && document.visibilityState === "visible") {
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => { wakeLock = null; });
+      } else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+    } catch {}
+  }
+  // Phones and tablets suspend background tabs without always reporting a lost connection.
+  // When the page is visible again, reconnect and fetch what arrived in the meantime.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible" || !room) return;
+    keepAwake(true);
+    subscribe(room);
+  });
+
   function subscribe(r) {
     if (room !== r) return;
+    r.es?.close();
     const es = r.es = new EventSource(RELAY + r.topic + "/sse?since=" + encodeURIComponent(r.since));
     es.onopen = () => {
       clearTimeout(r.downTimer); r.downTimer = null;
@@ -777,7 +829,7 @@ kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-wid
       const isNew = !r.peer;
       r.peer = true; r.state = "ok";
       if (m.k === "hello") relaySend({ k: "here", role: r.role });
-      if (m.role === r.role) setStatus("Begge computere er sat til samme sprog. Afslut og vælg det andet sprog på den ene. / Оба компьютера настроены на один язык. Отключитесь и выберите другой язык на одном из них.", true);
+      if (m.role === r.role) setStatus("Begge enheder er sat til samme sprog. Afslut og vælg det andet sprog på den ene. / Оба устройства настроены на один язык. Отключитесь и выберите другой язык на одном из них.", true);
       renderPair();
       if (isNew) $("pair").hidden = true, $("pairBtn").setAttribute("aria-expanded", "false");
     } else if (m.k === "bye") {
@@ -805,6 +857,7 @@ kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-wid
     if (!silent) relaySend({ k: "bye" });
     room.es?.close();
     room = null;
+    keepAwake(false);
     try { history.replaceState(null, "", location.pathname + location.search); } catch {}
     renderPair();
   }
@@ -851,12 +904,23 @@ kbd { font: .75rem var(--mono); border: 1px solid var(--line); border-bottom-wid
     $("pairBtn").setAttribute("aria-expanded", open);
   };
   document.querySelectorAll("#startRoles button").forEach(b => b.onclick = () => joinRoom(newCode(), b.dataset.role));
+  // Remember which language button was pressed: older Safari has no e.submitter.
+  let joinRole = null;
+  document.querySelectorAll("#joinForm button").forEach(b => b.addEventListener("click", () => { joinRole = b.dataset.role; }));
+  $("joinCode").addEventListener("keydown", e => {
+    // Enter / "Go" on a phone keyboard would silently pick the first button (Danish).
+    if (e.key === "Enter") { e.preventDefault(); setStatus("Tryk på knappen med dit sprog. / Нажмите кнопку со своим языком."); }
+  });
   $("joinForm").addEventListener("submit", e => {
     e.preventDefault();
+    const role = e.submitter?.dataset.role || joinRole;
+    joinRole = null;
+    if (!role) return;
     const code = $("joinCode").value.replace(/\D/g, "");
     if (code.length !== 8) { setStatus("Koden skal have 8 cifre. / Код должен состоять из 8 цифр.", true); $("joinCode").focus(); return; }
     $("joinCode").value = "";
-    joinRoom(code, e.submitter?.dataset.role || "da");
+    $("joinCode").blur();
+    joinRoom(code, role);
   });
   $("leave").onclick = () => leaveRoom(false);
   $("copyLink").onclick = async () => {

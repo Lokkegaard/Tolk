@@ -15,7 +15,7 @@ En lille webapp, der tolker mellem dansk og russisk med tale og tekst, uden AI.
 
 ## To enheder
 
-Appen er lavet til samtaler mellem to elever eller en lærer og en elev, hvor hver har sin egen computer.
+Appen er lavet til samtaler mellem to elever eller en lærer og en elev, hvor hver har sin egen enhed: computer, iPad eller telefon. Brug Safari på iPhone og iPad.
 
 1. Tryk "To enheder" og vælg, hvem der bruger computeren. Der vises en kode med 8 cifre, en QR-kode og et link.
 2. Den anden skriver koden under "To enheder" og vælger sit sprog, eller åbner linket.
