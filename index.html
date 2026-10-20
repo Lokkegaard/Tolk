@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tolk DA ⇄ RU</title>
+<!-- Google's online speech answers 404 when a foreign site is named as referrer, so send none. -->
+<meta name="referrer" content="no-referrer">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -367,7 +369,7 @@ summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
     if (audio) { audio.pause(); audio = null; }
   }
 
-  async function playOnline(parts, lang, token) {
+  async function playOnline(parts, lang, token, synthFallback) {
     if (hasSynth) speechSynthesis.cancel();
     for (const p of parts) {
       if (token !== speakToken) return;
@@ -375,7 +377,11 @@ summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
       const done = new Promise((res, rej) => { a.onended = res; a.onerror = rej; });
       try { await a.play(); await done; }
       catch {
-        if (token === speakToken) setStatus("Oplæsningen kunne ikke afspilles. Tjek lyden og internetforbindelsen, eller vælg en anden stemme under Indstillinger.", true);
+        if (token !== speakToken) return;
+        // Last resort: the browser's own voice for the language, even an online one.
+        const v = synthFallback && matching(lang)[0];
+        if (v) return speakWith(v, parts, lang, token, false);
+        setStatus("Oplæsningen kunne ikke afspilles. Tjek lyden og internetforbindelsen, eller vælg en anden stemme under Indstillinger.", true);
         return;
       }
     }
@@ -385,7 +391,11 @@ summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
     stopSpeaking();
     if (!text) return;
     const token = speakToken, parts = pieces(text), voice = pickVoice(lang);
-    if (voice === "online") return playOnline(parts, lang, token);
+    if (voice === "online") return playOnline(parts, lang, token, true);
+    speakWith(voice, parts, lang, token, true);
+  }
+
+  async function speakWith(voice, parts, lang, token, onlineFallback) {
     await new Promise(r => setTimeout(r, 150)); // Chrome drops an utterance spoken right after cancel()
     if (token !== speakToken) return;
     let failed = false;
@@ -396,7 +406,8 @@ summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
       u.onerror = e => {
         if (failed || token !== speakToken || e.error === "interrupted" || e.error === "canceled") return;
         failed = true;
-        playOnline(parts, lang, token);
+        if (onlineFallback) playOnline(parts, lang, token, false);
+        else setStatus("Oplæsningen fejlede (" + e.error + "). Vælg en anden stemme under Indstillinger.", true);
       };
       return u;
     });
