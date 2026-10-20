@@ -23,4 +23,4 @@ Vælges under Indstillinger. Hvis den valgte fejler, prøves en anden automatisk
 
 ## Krav
 
-Talegenkendelse kræver Chrome, Edge eller Safari og internetforbindelse. Oplæsning kræver danske og russiske stemmer på enheden.
+Talegenkendelse kræver Chrome, Edge eller Safari og internetforbindelse. Oplæsning bruger en stemme på enheden, hvis den findes, og ellers Googles online-stemme. Stemmen kan vælges og afprøves under Indstillinger.

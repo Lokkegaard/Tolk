@@ -94,6 +94,8 @@ summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
 .settings select, .settings input[type=text], .settings input[type=url] {
   font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px;
 }
+.vrow { display: flex; gap: 8px; }
+.vrow select { flex: 1; min-width: 0; }
 .check { display: flex !important; align-items: center; gap: 8px; color: var(--fg) !important; }
 .hint { grid-column: 1 / -1; font-size: .82rem; color: var(--muted); margin: 0; max-width: 75ch; }
 </style>
@@ -156,9 +158,15 @@ summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
         <label>E-mail til MyMemory (valgfri, giver større dagskvote)
           <input type="text" id="mmEmail" autocomplete="off">
         </label>
+        <label>Dansk stemme
+          <span class="vrow"><select id="daVoice"></select><button type="button" class="ghost" id="daTest">Prøv</button></span>
+        </label>
+        <label>Russisk stemme
+          <span class="vrow"><select id="ruVoice"></select><button type="button" class="ghost" id="ruTest">Prøv</button></span>
+        </label>
         <label class="check"><input type="checkbox" id="autoSpeak" checked> Læs oversættelsen højt automatisk</label>
         <label class="check"><input type="checkbox" id="fallback" checked> Prøv en anden kilde, hvis den valgte fejler</label>
-        <p class="hint">Sproget genkendes automatisk: kyrillisk skrift oversættes til dansk, alt andet til russisk. En besked med begge sprog oversættes sætning for sætning. Hvis tal i oversættelsen ikke stemmer med originalen, eller en sætning kommer uoversat tilbage, tilføjes en note om at det bør bekræftes. Talegenkendelse kræver Chrome, Edge eller Safari.</p>
+        <p class="hint">Sproget genkendes automatisk: kyrillisk skrift oversættes til dansk, alt andet til russisk. En besked med begge sprog oversættes sætning for sætning. Hvis tal i oversættelsen ikke stemmer med originalen, eller en sætning kommer uoversat tilbage, tilføjes en note om at det bør bekræftes. Talegenkendelse kræver Chrome, Edge eller Safari. Stemmen "Automatisk" bruger en stemme, der er installeret på enheden, og ellers Googles online-stemme.</p>
       </div>
     </details>
   </div>
@@ -307,19 +315,98 @@ summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
   function setStatus(msg, err) { const s = $("status"); s.textContent = msg; s.className = "status" + (err ? " err" : ""); }
 
   // ---------- text to speech ----------
-  function speak(text, lang) {
-    if (!("speechSynthesis" in window) || !text) return;
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = LANG[lang].tts;
-    const v = speechSynthesis.getVoices().find(v => v.lang.replace("_", "-").toLowerCase().startsWith(lang));
-    if (v) u.voice = v;
-    else setStatus("Ingen " + LANG[lang].name.toLowerCase() + " stemme fundet på enheden. Installér en i systemets taleindstillinger.", true);
-    speechSynthesis.speak(u);
+  // Chrome loads voices asynchronously, and its built-in online voices (e.g. "Google русский") often
+  // fail silently, especially when speak() follows cancel(). So "auto" uses an installed local voice
+  // when there is one, and otherwise plays Google's online speech as ordinary audio.
+  const hasSynth = "speechSynthesis" in window;
+  let voices = [], audio = null, speakToken = 0, utterances = [];
+  const matching = lang => voices.filter(v => v.lang.replace("_", "-").toLowerCase().startsWith(lang));
+
+  function fillVoiceLists() {
+    for (const lang of ["da", "ru"]) {
+      const sel = $(lang + "Voice");
+      sel.innerHTML = '<option value="auto">Automatisk (anbefalet)</option><option value="online">Google online-stemme</option>';
+      for (const v of matching(lang)) {
+        const o = document.createElement("option");
+        o.value = v.voiceURI;
+        o.textContent = v.name + (v.localService ? "" : " (browserens online-stemme)");
+        sel.appendChild(o);
+      }
+      const saved = store.get(lang + "Voice");
+      if (saved && [...sel.options].some(o => o.value === saved)) sel.value = saved;
+    }
   }
-  if ("speechSynthesis" in window) speechSynthesis.getVoices();
+  function loadVoices() { voices = hasSynth ? speechSynthesis.getVoices() : []; fillVoiceLists(); }
+  loadVoices();
+  if (hasSynth) speechSynthesis.addEventListener("voiceschanged", loadVoices);
+  for (const lang of ["da", "ru"]) $(lang + "Voice").addEventListener("change", e => store.set(lang + "Voice", e.target.value));
+
+  function pickVoice(lang) {
+    const choice = $(lang + "Voice").value;
+    if (choice === "online" || !hasSynth) return "online";
+    if (choice !== "auto") { const v = voices.find(v => v.voiceURI === choice); if (v) return v; }
+    return matching(lang).find(v => v.localService) || "online";
+  }
+
+  // Both Chrome and Google's online speech cut off long text, so speak in pieces of at most ~180 characters.
+  function pieces(text, max = 180) {
+    const out = [];
+    let cur = "";
+    for (const w of text.split(/\s+/)) {
+      if (cur && (cur + " " + w).length > max) { out.push(cur); cur = w; }
+      else cur = cur ? cur + " " + w : w;
+      if (/[.!?…]$/.test(cur) && cur.length > max / 2) { out.push(cur); cur = ""; }
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+
+  function stopSpeaking() {
+    speakToken++;
+    if (hasSynth) speechSynthesis.cancel();
+    if (audio) { audio.pause(); audio = null; }
+  }
+
+  async function playOnline(parts, lang, token) {
+    if (hasSynth) speechSynthesis.cancel();
+    for (const p of parts) {
+      if (token !== speakToken) return;
+      const a = audio = new Audio("https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=" + lang + "&q=" + encodeURIComponent(p));
+      const done = new Promise((res, rej) => { a.onended = res; a.onerror = rej; });
+      try { await a.play(); await done; }
+      catch {
+        if (token === speakToken) setStatus("Oplæsningen kunne ikke afspilles. Tjek lyden og internetforbindelsen, eller vælg en anden stemme under Indstillinger.", true);
+        return;
+      }
+    }
+  }
+
+  async function speak(text, lang) {
+    stopSpeaking();
+    if (!text) return;
+    const token = speakToken, parts = pieces(text), voice = pickVoice(lang);
+    if (voice === "online") return playOnline(parts, lang, token);
+    await new Promise(r => setTimeout(r, 150)); // Chrome drops an utterance spoken right after cancel()
+    if (token !== speakToken) return;
+    let failed = false;
+    utterances = parts.map(p => {
+      const u = new SpeechSynthesisUtterance(p);
+      u.lang = LANG[lang].tts;
+      u.voice = voice;
+      u.onerror = e => {
+        if (failed || token !== speakToken || e.error === "interrupted" || e.error === "canceled") return;
+        failed = true;
+        playOnline(parts, lang, token);
+      };
+      return u;
+    });
+    utterances.forEach(u => speechSynthesis.speak(u));
+  }
+
   $("daSay").onclick = () => speak(last.da, "da");
   $("ruSay").onclick = () => speak(last.ru, "ru");
+  $("daTest").onclick = () => speak("Goddag. Hvordan går det?", "da");
+  $("ruTest").onclick = () => speak("Здравствуйте. Как у Вас дела?", "ru");
 
   // ---------- speech recognition ----------
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -328,7 +415,7 @@ summary { cursor: pointer; padding: 10px 14px; font-weight: 500; }
   function startRec(lang) {
     if (!SR) { setStatus("Talegenkendelse understøttes ikke i denne browser. Brug Chrome, Edge eller Safari, eller skriv i feltet.", true); return; }
     if (rec) { const was = recLang; stopRec(); if (was === lang) return; }
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    stopSpeaking();
     rec = new SR();
     recLang = lang;
     rec.lang = LANG[lang].tts;
