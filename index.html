@@ -3,9 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Tolk DA ⇄ RU</title>
+<title>Tolk · Kiril Translate</title>
 <!-- Google's online speech answers 404 when a foreign site is named as referrer, so send none. -->
 <meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tolk">
+<meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12151b" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
@@ -90,6 +98,7 @@ h1, h2 { text-wrap: balance; }
 .codein { width: 100%; font: 600 1.5rem var(--mono); letter-spacing: .14em; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
 .codein::placeholder { color: var(--muted); opacity: .5; }
 .card label { font-size: .9rem; color: var(--muted); }
+.clabel { font-size: .88rem; color: var(--muted); }
 
 /* waiting for the other device */
 .waitcard { gap: 18px; padding: 24px; }
@@ -116,8 +125,8 @@ h1, h2 { text-wrap: balance; }
 .msg.mine.da { background: var(--da-soft); } .msg.mine.ru { background: var(--ru-soft); }
 .msg.theirs { align-self: flex-start; border-bottom-left-radius: 4px; background: var(--bg); border: 1px solid var(--line); }
 .msg.theirs.da { border-left: 4px solid var(--ru); } .msg.theirs.ru { border-left: 4px solid var(--da); }
-.mtext { font-size: 1.25rem; line-height: 1.35; overflow-wrap: anywhere; }
-.msub { font-size: .88rem; color: var(--muted); overflow-wrap: anywhere; }
+.mtext { font-size: 1.25rem; line-height: 1.35; overflow-wrap: anywhere; white-space: pre-line; }
+.msub { font-size: .88rem; color: var(--muted); overflow-wrap: anywhere; white-space: pre-line; }
 .meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: .78rem; color: var(--muted); min-height: 1em; }
 .meta:empty { display: none; }
 .meta.err { color: var(--da); }
@@ -143,7 +152,7 @@ h1, h2 { text-wrap: balance; }
 .ph { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .lang { font-weight: 600; color: var(--c); letter-spacing: .06em; text-transform: uppercase; font-size: .8rem; }
 .role { font: .75rem var(--mono); color: var(--muted); }
-.text { font-size: clamp(1.25rem, 2.6vw, 1.9rem); line-height: 1.35; overflow-wrap: anywhere; min-width: 0; }
+.text { font-size: clamp(1.25rem, 2.6vw, 1.9rem); line-height: 1.35; overflow-wrap: anywhere; min-width: 0; white-space: pre-line; }
 .text.interim { color: var(--muted); font-style: italic; }
 .text.empty { color: var(--muted); font-size: 1.05rem; }
 .text .note { display: block; margin-top: 10px; }
@@ -226,6 +235,36 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
 .check input { flex: none; width: 18px; height: 18px; margin: 0; }
 .adv summary { cursor: pointer; font-weight: 600; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .adv[open] summary { margin-bottom: 12px; }
+
+/* install as app */
+.install { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; background: var(--panel); border: 1px dashed var(--line); border-radius: 16px; padding: 14px 16px; }
+.install img { width: 44px; height: 44px; border-radius: 10px; flex: none; }
+.install .itext { flex: 1 1 240px; display: grid; gap: 2px; min-width: 0; }
+.install .itext p { color: var(--muted); font-size: .92rem; }
+
+/* photo of a text */
+.iconbtn { flex: none; display: inline-grid; place-items: center; width: 52px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.iconbtn svg { width: 22px; height: 22px; }
+.photoPreview { max-width: 100%; max-height: 28vh; object-fit: contain; border-radius: 10px; border: 1px solid var(--line); justify-self: start; background: var(--bg); }
+.progress { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.progress span { display: block; height: 100%; width: 0; background: var(--fg); transition: width .2s; }
+.dlg textarea { width: 100%; min-height: 120px; max-height: 40vh; resize: vertical; background: var(--bg); }
+.photoOut { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1.1rem; line-height: 1.45; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-height: 3em; }
+.photoOut.busy { color: var(--muted); font-style: italic; }
+@media (max-width: 560px) { .compose .iconbtn { order: 1; } }
+
+/* tap a word to see what it means */
+.w { cursor: pointer; border-radius: 3px; }
+.wordtap .w:hover { background: color-mix(in srgb, var(--fg) 10%, transparent); }
+.wordtap .msub .w, .wordtap .text .w { text-decoration: underline dotted color-mix(in srgb, var(--muted) 60%, transparent); text-underline-offset: 3px; }
+.w.sel { background: var(--warn-soft); color: var(--warn); }
+.wordpop {
+  position: fixed; z-index: 30; width: min(300px, calc(100vw - 32px)); background: var(--panel); color: var(--fg);
+  border: 1px solid var(--line); border-radius: 14px; padding: 14px; box-shadow: 0 10px 30px rgb(0 0 0 / .18); display: grid; gap: 8px;
+}
+.wp-word { font-weight: 600; font-size: 1.15rem; }
+.wp-tr { font-size: 1.05rem; }
+.wp-tr.busy { color: var(--muted); font-style: italic; }
 </style>
 </head>
 <body>
@@ -270,6 +309,14 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
         <p data-t="soloDesc"></p>
         <button type="button" class="btn" id="soloBtn" data-t="soloBtn"></button>
       </article>
+    </div>
+    <div class="install" id="installBox" hidden>
+      <img src="icons/icon-192.png" alt="">
+      <div class="itext"><strong data-t="install"></strong><p id="installText"></p></div>
+      <div class="row">
+        <button type="button" class="btn main small" id="installBtn" data-t="installBtn" hidden></button>
+        <button type="button" class="btn ghost small" id="installNo" data-t="notNow"></button>
+      </div>
     </div>
     <p class="fine" data-t="privacy"></p>
   </section>
@@ -345,6 +392,8 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     </div>
     <form class="compose" id="compose">
       <button type="button" class="mic" id="myMic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span class="ml"></span></button>
+      <button type="button" class="iconbtn" id="photoBtn" data-ta="photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg></button>
+      <input type="file" id="photoInput" accept="image/*" hidden>
       <textarea id="input" rows="1"></textarea>
       <button type="submit" class="send" data-ta="send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span data-t="send"></span></button>
     </form>
@@ -368,6 +417,11 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
         <label for="ruVoice" data-t="sRuVoice"></label>
         <div class="vrow"><select id="ruVoice"></select><button type="button" class="btn small" id="ruTest" data-t="sTry"></button></div>
       </div>
+    </fieldset>
+    <fieldset>
+      <legend data-t="sLearn"></legend>
+      <label class="check"><input type="checkbox" id="wordTap" checked> <span data-t="sWordTap"></span></label>
+      <label class="check"><input type="checkbox" id="slowSpeech"> <span data-t="sSlow"></span></label>
     </fieldset>
     <fieldset>
       <legend data-t="sTalk"></legend>
@@ -402,6 +456,42 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   </form>
 </dialog>
 
+<dialog id="photoDlg">
+  <form method="dialog" class="dlg">
+    <div class="dlghead"><h2 data-t="photoTitle"></h2><button class="btn small" value="close" data-t="close"></button></div>
+    <img class="photoPreview" id="photoPreview" alt="">
+    <div id="ocrBusy" class="pbusy" hidden>
+      <p id="ocrStatus"></p>
+      <div class="progress"><span id="ocrBar"></span></div>
+    </div>
+    <div id="ocrResult" hidden>
+      <div class="field">
+        <label for="photoText" data-t="ocrText"></label>
+        <textarea id="photoText"></textarea>
+      </div>
+      <div class="field">
+        <span class="clabel" id="photoOutLabel" data-t="ocrTr"></span>
+        <div class="photoOut" id="photoOut"></div>
+      </div>
+    </div>
+    <div class="row">
+      <button type="button" class="btn main" id="photoTranslate" data-t="retranslate" hidden></button>
+      <button type="button" class="btn" id="photoSay" data-t="readAloud" hidden></button>
+      <button type="button" class="btn" id="photoToChat" data-t="toChat" hidden></button>
+      <button type="button" class="btn ghost" id="photoNew" data-t="newPhoto"></button>
+    </div>
+  </form>
+</dialog>
+
+<div class="wordpop" id="wordPop" hidden role="dialog" aria-live="polite">
+  <div class="wp-word" id="wpWord"></div>
+  <div class="wp-tr" id="wpTr"></div>
+  <div class="row">
+    <button type="button" class="btn small" id="wpSay" data-t="wpSay"></button>
+    <button type="button" class="btn small" id="wpSlow" data-t="wpSlow"></button>
+  </div>
+</div>
+
 <script src="qrcode.js"></script>
 <script>
 (() => {
@@ -413,7 +503,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   // ---------- texts ----------
   const S = {
     da: {
-      sub: "dansk ⇄ russisk", settings: "Indstillinger", close: "Luk",
+      sub: "Kiril Translate", settings: "Indstillinger", close: "Luk",
       homeTitle: "Hvordan vil I tale sammen?",
       twoTitle: "Hver sin enhed", twoDesc: "Du får en kode, som den anden skriver på sin computer, iPad eller telefon.", twoBtn: "Start samtale",
       joinTitle: "Jeg har fået en kode", joinLabel: "Skriv koden med 8 cifre", joinBtn: "Forbind",
@@ -423,7 +513,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
       how: "Den anden åbner {url}, vælger sit sprog og trykker \"Jeg har fået en kode\".",
       orScan: "Eller scan QR-koden med kameraet.", copyLink: "Kopiér link", copied: "Linket er kopieret.", copyManual: "Linket: {url}", cancel: "Annullér",
       connected: "Forbundet", lost: "Ingen forbindelse. Prøver igen …", peerLeft: "Den anden har forladt samtalen.", code: "kode", leave: "Afslut samtale",
-      chatEmpty: "Tryk på mikrofonen eller skriv for at begynde. Det, du siger, bliver oversat og vist på den andens skærm.",
+      chatEmpty: "Tryk på mikrofonen eller skriv for at begynde. Det, du siger, bliver oversat og vist på den andens skærm. Tryk på et ord i den andens original for at se, hvad det betyder.",
       talk: "Tal", listening: "Lytter … tryk for at stoppe", inputPh: "Skriv en besked …", soloPh: "Skriv på dansk eller russisk …", send: "Send",
       keys: "Tryk på mikrofonen, eller hold <kbd>mellemrum</kbd> nede, for at tale · <kbd>Enter</kbd> sender · <kbd>Esc</kbd> stopper oplæsning",
       sendIn: "Sender om {n} s …", sendNow: "Send nu", edit: "Ret", editHint: "Ret teksten, og tryk Send.",
@@ -445,10 +535,19 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
       sAdv: "Avanceret", sProvider: "Oversættelseskilde", sFallback: "Prøv en anden kilde, hvis den valgte fejler",
       sLibreUrl: "LibreTranslate-adresse (skolens egen server)", sLibreKey: "LibreTranslate API-nøgle (valgfri)", sMm: "E-mail til MyMemory (valgfri, giver større dagskvote)",
       sAbout: "Sproget genkendes automatisk: kyrillisk skrift oversættes til dansk, alt andet til russisk. Hvis tal i oversættelsen ikke stemmer med originalen, tilføjes en note om at det bør bekræftes. Forbindelsen mellem to enheder går krypteret gennem den gratis open source-tjeneste ntfy.sh.",
+      photo: "Tag et billede af en tekst", photoTitle: "Tekst fra billede",
+      ocrLoading: "Henter tekstgenkendelse (første gang ca. 8 MB) …", ocrReading: "Læser teksten … {p} %",
+      ocrNone: "Der blev ikke fundet nogen tekst. Prøv et skarpere billede tæt på teksten.", ocrFail: "Tekstgenkendelsen fejlede ({e}). Tjek internettet, og prøv igen.",
+      ocrText: "Genkendt tekst (ret gerne fejl)", ocrTr: "Oversættelse", retranslate: "Oversæt igen", readAloud: "Læs op", toChat: "Send til samtalen", newPhoto: "Nyt billede",
+      wpSay: "Hør", wpSlow: "Langsomt", wpLoading: "Slår op …", wpFail: "Kunne ikke slå ordet op.", replaySlow: "Langsomt",
+      install: "Installér som app", installDesc: "Læg Tolk på hjemmeskærmen, så den åbner i fuld skærm som en app.", installBtn: "Installér", notNow: "Ikke nu",
+      installIos: "Tryk på Del-knappen i Safari, og vælg \"Føj til hjemmeskærm\".",
+      srNotAllowed: "Talegenkendelsen er ikke tilgængelig her. Åbn siden i Safari eller Chrome i stedet for som app, eller skriv.",
+      sLearn: "Læring", sWordTap: "Tryk på et ord for at se, hvad det betyder", sSlow: "Langsom oplæsning (godt, når man lærer sproget)",
       vOnline: "Google online-stemme (anbefalet)", vAuto: "Enhedens egen stemme, hvis den findes", vBrowserOnline: " (browserens online-stemme)"
     },
     ru: {
-      sub: "датский ⇄ русский", settings: "Настройки", close: "Закрыть",
+      sub: "Kiril Translate", settings: "Настройки", close: "Закрыть",
       homeTitle: "Как вы будете общаться?",
       twoTitle: "Каждый со своего устройства", twoDesc: "Вы получите код, который собеседник введёт на своём компьютере, iPad или телефоне.", twoBtn: "Начать разговор",
       joinTitle: "У меня есть код", joinLabel: "Введите код из 8 цифр", joinBtn: "Подключиться",
@@ -458,7 +557,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
       how: "Собеседник открывает {url}, выбирает свой язык и нажимает «У меня есть код».",
       orScan: "Или отсканируйте QR-код камерой.", copyLink: "Копировать ссылку", copied: "Ссылка скопирована.", copyManual: "Ссылка: {url}", cancel: "Отмена",
       connected: "Подключено", lost: "Нет связи. Повторная попытка …", peerLeft: "Собеседник покинул разговор.", code: "код", leave: "Завершить разговор",
-      chatEmpty: "Нажмите на микрофон или напишите, чтобы начать. Сказанное будет переведено и показано на экране собеседника.",
+      chatEmpty: "Нажмите на микрофон или напишите, чтобы начать. Сказанное будет переведено и показано на экране собеседника. Нажмите на слово в оригинале собеседника, чтобы узнать его значение.",
       talk: "Говорить", listening: "Слушаю … нажмите, чтобы остановить", inputPh: "Напишите сообщение …", soloPh: "Пишите по-датски или по-русски …", send: "Отправить",
       keys: "Нажмите на микрофон или удерживайте <kbd>пробел</kbd>, чтобы говорить · <kbd>Enter</kbd> отправляет · <kbd>Esc</kbd> останавливает озвучку",
       sendIn: "Отправка через {n} с …", sendNow: "Отправить сейчас", edit: "Исправить", editHint: "Исправьте текст и нажмите «Отправить».",
@@ -480,6 +579,15 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
       sAdv: "Дополнительно", sProvider: "Источник перевода", sFallback: "Пробовать другой источник, если выбранный не работает",
       sLibreUrl: "Адрес LibreTranslate (собственный сервер школы)", sLibreKey: "Ключ API LibreTranslate (необязательно)", sMm: "E-mail для MyMemory (необязательно, увеличивает дневной лимит)",
       sAbout: "Язык определяется автоматически: кириллица переводится на датский, остальное — на русский. Если числа в переводе не совпадают с оригиналом, добавляется пометка о том, что это нужно уточнить. Связь между двумя устройствами идёт в зашифрованном виде через бесплатный сервис с открытым кодом ntfy.sh.",
+      photo: "Сфотографировать текст", photoTitle: "Текст с фотографии",
+      ocrLoading: "Загрузка распознавания текста (в первый раз около 8 МБ) …", ocrReading: "Распознавание текста … {p} %",
+      ocrNone: "Текст не найден. Попробуйте более чёткое фото ближе к тексту.", ocrFail: "Не удалось распознать текст ({e}). Проверьте интернет и попробуйте снова.",
+      ocrText: "Распознанный текст (исправьте ошибки)", ocrTr: "Перевод", retranslate: "Перевести снова", readAloud: "Озвучить", toChat: "Отправить в разговор", newPhoto: "Новое фото",
+      wpSay: "Слушать", wpSlow: "Медленно", wpLoading: "Поиск …", wpFail: "Не удалось найти слово.", replaySlow: "Медленно",
+      install: "Установить как приложение", installDesc: "Добавьте Tolk на главный экран, чтобы он открывался как приложение.", installBtn: "Установить", notNow: "Не сейчас",
+      installIos: "Нажмите кнопку «Поделиться» в Safari и выберите «На экран „Домой“».",
+      srNotAllowed: "Распознавание речи здесь недоступно. Откройте страницу в Safari или Chrome, а не как приложение, или пишите.",
+      sLearn: "Обучение", sWordTap: "Нажатие на слово показывает его значение", sSlow: "Медленная озвучка (удобно при изучении языка)",
       vOnline: "Онлайн-голос Google (рекомендуется)", vAuto: "Голос устройства, если есть", vBrowserOnline: " (онлайн-голос браузера)"
     }
   };
@@ -489,7 +597,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     get(k) { try { return localStorage.getItem("tolk." + k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem("tolk." + k, v); } catch {} }
   };
-  const S_KEYS = ["provider", "libreUrl", "libreKey", "mmEmail", "autoSpeak", "fallback", "reviewDelay"];
+  const S_KEYS = ["provider", "libreUrl", "libreKey", "mmEmail", "autoSpeak", "fallback", "reviewDelay", "wordTap", "slowSpeech"];
   for (const k of S_KEYS) {
     const el = $(k), v = store.get(k);
     if (v !== null) el.type === "checkbox" ? (el.checked = v === "1") : (el.value = v);
@@ -512,6 +620,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     document.querySelectorAll("[data-ta]").forEach(el => { el.setAttribute("aria-label", t(el.dataset.ta)); el.title = t(el.dataset.ta); });
     document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.ui === ui)));
     fillVoiceLists();
+    renderInstall();
     render();
   }
   function setUi(lang) {
@@ -576,7 +685,24 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   }
 
   // ---------- providers ----------
+  // Split text into pieces of at most max characters, at sentence ends where possible.
+  function chunk(text, max) {
+    const out = [];
+    let cur = "";
+    const add = piece => { if (cur && (cur + piece).length > max) { out.push(cur); cur = ""; } cur += piece; };
+    for (const s of text.match(/[^.!?…]+[.!?…]*\s*/g) || [text]) {
+      if (s.length <= max) add(s); else for (const w of s.split(/(?<=\s)/)) add(w);
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
   async function google(q, sl, tl) {
+    // Long text (e.g. from a photo) goes in pieces, so the request URL stays short.
+    if (q.length > 1500) {
+      const out = [];
+      for (const part of chunk(q, 1500)) out.push(await google(part, sl, tl));
+      return out.join(" ");
+    }
     const u = "https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=" + sl + "&tl=" + tl + "&q=" + encodeURIComponent(q);
     const r = await fetch(u);
     if (!r.ok) throw new Error("Google " + r.status);
@@ -635,6 +761,12 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   const clean = s => s.replace(/^["'«»„“”]+|["'«»„“”]+$/g, "").replace(/\s+/g, " ").trim();
 
   async function translateMsg(text) {
+    // Keep paragraphs (e.g. from a photographed worksheet): translate them one by one.
+    const paras = text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+    if (paras.length > 1) {
+      const rs = await Promise.all(paras.map(translateMsg));
+      return { paras: rs, srcLang: detect(text), dst: rs.map(r => r.dst).join("\n\n"), unsure: rs.some(r => r.unsure) };
+    }
     const segs = segments(text);
     const results = await Promise.all(segs.map(s => translateText(s.text.trim(), s.lang, other(s.lang))));
     return {
@@ -646,6 +778,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   }
   // Back-translation shows the sender how the message reads on the other side.
   async function backTranslate(r) {
+    if (r.paras) return (await Promise.all(r.paras.map(backTranslate))).join("\n\n");
     const back = await Promise.all(r.segs.map((s, i) => translateText(r.results[i], other(s.lang), s.lang)));
     return clean(back.join(" "));
   }
@@ -661,7 +794,8 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   function setPanel(lang, text, opts = {}) {
     const el = $(lang + "Text");
     el.className = "text" + (opts.interim ? " interim" : "");
-    el.textContent = text;
+    el.textContent = "";
+    el.append(opts.interim ? text : wordify(text, lang));
     if (opts.unsure) el.append(make("span", "note", CONFIRM));
     if (opts.back !== undefined) {
       const b = make("span", "back", t("back", null, lang) + " " + (opts.back ?? "…"));
@@ -716,7 +850,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     const main = make("div", "mtext", text);
     main.lang = lang;
     li.append(main);
-    if (sub) li.append(make("div", "msub", sub));
+    if (sub) li.append(sub instanceof Node ? sub : make("div", "msub", sub));
     li.append(make("div", "meta"));
     $("chatList").insertBefore(li, $("talking"));
     $("chatEmpty").hidden = true;
@@ -761,14 +895,19 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     const mine = room.role;
     // Show the version in this person's language, whichever side it is on.
     const showText = m.srcLang === mine ? m.src : m.dst, showSub = m.srcLang === mine ? m.dst : m.src;
-    const li = bubble(false, mine, showText, t("orig") + " " + showSub);
+    // The original is in the other language: its words can be tapped to see what they mean.
+    const sub = make("div", "msub", t("orig") + " ");
+    sub.append(wordify(showSub, other(mine)));
+    const li = bubble(false, mine, showText, sub);
     if (m.unsure) addBefore(li, make("div", "note", CONFIRM));
-    const rp = make("button", "replay");
-    rp.type = "button";
-    rp.innerHTML = SPEAKER;
-    rp.append(make("span", "", t("replay")));
-    rp.onclick = () => speak(showText, mine);
-    meta(li).append(rp);
+    for (const [label, rate] of [[t("replay"), 1], [t("replaySlow"), 0.7]]) {
+      const rp = make("button", "replay");
+      rp.type = "button";
+      rp.innerHTML = SPEAKER;
+      rp.append(make("span", "", label));
+      rp.onclick = () => speak(showText, mine, rate);
+      meta(li).append(rp);
+    }
     if (opt("autoSpeak") && m.srcLang !== mine) speak(m.unsure ? showText + " " + CONFIRM : showText, mine);
   }
   function markDelivered(mid) {
@@ -804,7 +943,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   // fail silently, especially when speak() follows cancel(). So the default plays Google's online
   // speech as ordinary audio; "auto" uses an installed local voice when there is one.
   const hasSynth = "speechSynthesis" in window;
-  let voices = [], audio = null, speakToken = 0, utterances = [];
+  let voices = [], audio = null, speakToken = 0, utterances = [], speakRate = 1;
   const matching = lang => voices.filter(v => v.lang.replace("_", "-").toLowerCase().startsWith(lang));
 
   function fillVoiceLists() {
@@ -868,6 +1007,8 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
       if (token !== speakToken) return;
       const a = audio = player;
       a.src = "https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=" + lang + "&q=" + encodeURIComponent(p);
+      a.preservesPitch = true;
+      a.defaultPlaybackRate = a.playbackRate = speakRate;
       const done = new Promise((res, rej) => { a.onended = res; a.onerror = rej; });
       try { await a.play(); await done; }
       catch (e) {
@@ -886,8 +1027,10 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     }
   }
 
-  async function speak(text, lang) {
+  // rate: 1 is normal speed; without it, the "slow reading" setting decides.
+  async function speak(text, lang, rate) {
     stopSpeaking();
+    speakRate = rate ?? (opt("slowSpeech") ? 0.75 : 1);
     $("soundBtn").hidden = true; pendingSound = null;
     if (!text) return;
     const token = speakToken, parts = pieces(text), voice = pickVoice(lang);
@@ -903,6 +1046,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
       const u = new SpeechSynthesisUtterance(p);
       u.lang = LANG[lang].tts;
       u.voice = voice;
+      u.rate = speakRate;
       u.onerror = e => {
         if (failed || token !== speakToken || e.error === "interrupted" || e.error === "canceled") return;
         failed = true;
@@ -961,7 +1105,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     };
     r.onerror = e => {
       if (e.error === "aborted") return;
-      const k = { "not-allowed": "micBlocked", "service-not-allowed": "micBlocked", "no-speech": "noSpeech", "network": "srNet" }[e.error];
+      const k = { "not-allowed": "micBlocked", "service-not-allowed": "srNotAllowed", "no-speech": "noSpeech", "network": "srNet" }[e.error];
       toast(k ? t(k) : t("srErr", { e: e.error }), true);
     };
     recTimer = setInterval(() => {
@@ -1078,7 +1222,7 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
   const typing = el => el.closest?.("input, textarea, select, [contenteditable], dialog");
   let holding = false;
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") { stopSpeaking(); if (reviewTimer) editMode(); return; }
+    if (e.key === "Escape") { stopSpeaking(); closeWord(); if (reviewTimer) editMode(); return; }
     if (e.code !== "Space" || typing(e.target) || (screen !== "Chat" && screen !== "Solo")) return;
     e.preventDefault();
     if (e.repeat || holding) return;
@@ -1247,6 +1391,195 @@ legend { padding: 0 0 8px; font-weight: 600; font-size: .8rem; letter-spacing: .
     keepAwake(true);
     subscribe(room);
   });
+
+  // ---------- tap a word to see what it means ----------
+  function wordify(text, lang) {
+    const frag = document.createDocumentFragment();
+    let at = 0;
+    for (const m of text.matchAll(/[\p{L}\p{M}]+(?:['’-][\p{L}\p{M}]+)*/gu)) {
+      if (m.index > at) frag.append(text.slice(at, m.index));
+      const w = make("span", "w", m[0]);
+      w.dataset.lang = lang;
+      frag.append(w);
+      at = m.index + m[0].length;
+    }
+    if (at < text.length) frag.append(text.slice(at));
+    return frag;
+  }
+  const wordCache = new Map();
+  let popWord = null;
+  function openWord(w) {
+    document.querySelector(".w.sel")?.classList.remove("sel");
+    w.classList.add("sel");
+    const word = w.textContent, lang = w.dataset.lang, to = other(lang);
+    popWord = { word, lang };
+    $("wpWord").textContent = word;
+    $("wpWord").lang = lang;
+    const tr = $("wpTr");
+    tr.lang = to;
+    tr.className = "wp-tr busy";
+    tr.textContent = t("wpLoading");
+    $("wordPop").hidden = false;
+    placePop(w);
+    const key = lang + "|" + word.toLowerCase();
+    if (!wordCache.has(key)) wordCache.set(key, translateText(word, lang, to));
+    wordCache.get(key)
+      .then(res => { if (popWord?.word === word) { tr.className = "wp-tr"; tr.textContent = clean(res); placePop(w); } })
+      .catch(() => { wordCache.delete(key); if (popWord?.word === word) { tr.className = "wp-tr"; tr.textContent = t("wpFail"); } });
+  }
+  function placePop(w) {
+    const r = w.getBoundingClientRect(), pop = $("wordPop");
+    const pw = pop.offsetWidth, ph = pop.offsetHeight;
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - pw / 2), innerWidth - pw - 8);
+    let top = r.bottom + 8;
+    if (top + ph > innerHeight - 8) top = Math.max(8, r.top - ph - 8);
+    pop.style.left = left + "px";
+    pop.style.top = top + "px";
+  }
+  function closeWord() {
+    if ($("wordPop").hidden) return;
+    $("wordPop").hidden = true;
+    popWord = null;
+    document.querySelector(".w.sel")?.classList.remove("sel");
+  }
+  document.addEventListener("click", e => {
+    const w = e.target.closest?.(".w");
+    if (w && opt("wordTap")) openWord(w);
+  });
+  document.addEventListener("pointerdown", e => { if (!e.target.closest?.("#wordPop, .w")) closeWord(); }, true);
+  $("chat").addEventListener("scroll", closeWord, { passive: true });
+  window.addEventListener("resize", closeWord);
+  $("wpSay").onclick = () => popWord && speak(popWord.word, popWord.lang, 1);
+  $("wpSlow").onclick = () => popWord && speak(popWord.word, popWord.lang, 0.6);
+  const applyWordTap = () => document.body.classList.toggle("wordtap", opt("wordTap"));
+  $("wordTap").addEventListener("change", () => { applyWordTap(); closeWord(); });
+  applyWordTap();
+
+  // ---------- photo of a text ----------
+  // Text recognition runs in the browser with the open-source Tesseract, no AI service. Its files
+  // (about 8 MB for the program and the Danish and Russian data) load the first time and are then kept.
+  const TESS_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+  let ocrWorker = null, ocrProgress = () => {}, photoJob = null, photoResult = null, photoUrl = null;
+  function loadScript(src) {
+    return new Promise((res, rej) => {
+      const el = document.createElement("script");
+      el.src = src;
+      el.onload = res;
+      el.onerror = () => rej(new Error("download"));
+      document.head.append(el);
+    });
+  }
+  async function getOcr() {
+    ocrWorker ??= (async () => {
+      if (!window.Tesseract) await loadScript(TESS_URL);
+      return Tesseract.createWorker(["dan", "rus"], 1, { logger: m => ocrProgress(m) });
+    })();
+    try { return await ocrWorker; } catch (e) { ocrWorker = null; throw e; }
+  }
+  // Phone photos are huge; a smaller copy is read much faster and just as well.
+  async function prepImage(file) {
+    try {
+      const bmp = await createImageBitmap(file);
+      const scale = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(bmp.width * scale);
+      c.height = Math.round(bmp.height * scale);
+      c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+      return c;
+    } catch { return file; }
+  }
+  // Recognised text keeps the page's line breaks; join lines into paragraphs before translating.
+  const tidyOcr = s => s.replace(/-\n(?=\p{Ll})/gu, "").replace(/[ \t]+/g, " ").replace(/([^\n])\n(?!\n)/g, "$1 ").replace(/\n{3,}/g, "\n\n").trim();
+
+  async function readPhoto(file) {
+    const dlg = $("photoDlg");
+    if (!dlg.open) dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    $("photoPreview").src = photoUrl = URL.createObjectURL(file);
+    $("ocrResult").hidden = true;
+    for (const id of ["photoTranslate", "photoSay", "photoToChat"]) $(id).hidden = true;
+    $("ocrBusy").hidden = false;
+    $("ocrStatus").textContent = t("ocrLoading");
+    $("ocrBar").style.width = "0%";
+    const job = photoJob = {};
+    photoResult = null;
+    ocrProgress = m => {
+      if (photoJob !== job || m.status !== "recognizing text") return;
+      const pct = Math.round(m.progress * 100);
+      $("ocrStatus").textContent = t("ocrReading", { p: pct });
+      $("ocrBar").style.width = pct + "%";
+    };
+    try {
+      const [worker, img] = await Promise.all([getOcr(), prepImage(file)]);
+      if (photoJob !== job) return;
+      $("ocrStatus").textContent = t("ocrReading", { p: 0 });
+      const { data } = await worker.recognize(img);
+      if (photoJob !== job) return;
+      $("ocrBusy").hidden = true;
+      const text = tidyOcr(data.text || "");
+      if (!text) { toast(t("ocrNone"), true); return; }
+      $("photoText").value = text;
+      $("ocrResult").hidden = false;
+      $("photoTranslate").hidden = false;
+      translatePhoto();
+    } catch (e) {
+      if (photoJob === job) { $("ocrBusy").hidden = true; toast(t("ocrFail", { e: e?.message || e }), true); }
+    }
+  }
+  async function translatePhoto() {
+    const text = $("photoText").value.trim();
+    if (!text) return;
+    const out = $("photoOut"), job = photoJob;
+    out.className = "photoOut busy";
+    out.textContent = t("translating");
+    try {
+      const r = await translateMsg(text);
+      if (photoJob !== job) return;
+      const to = other(r.srcLang);
+      out.className = "photoOut";
+      out.lang = to;
+      out.textContent = r.dst + (r.unsure ? "\n\n" + CONFIRM : "");
+      photoResult = { src: text, dst: out.textContent, lang: to };
+      $("photoSay").hidden = false;
+      $("photoToChat").hidden = screen !== "Chat";
+    } catch (e) {
+      out.className = "photoOut";
+      out.textContent = t("trFail", { e: e.message });
+    }
+  }
+  $("photoBtn").onclick = () => $("photoInput").click();
+  $("photoNew").onclick = () => $("photoInput").click();
+  $("photoInput").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) readPhoto(f); });
+  $("photoTranslate").onclick = translatePhoto;
+  $("photoSay").onclick = () => photoResult && speak(photoResult.dst, photoResult.lang);
+  $("photoToChat").onclick = () => {
+    if (!photoResult || screen !== "Chat") return;
+    $("photoDlg").close();
+    chatSend(photoResult.src);
+  };
+  $("photoDlg").addEventListener("close", () => { photoJob = null; stopSpeaking(); });
+
+  // ---------- install as app ----------
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  let installPrompt = null;
+  const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function renderInstall() {
+    // Chrome and Edge offer their own install dialog; iPhone and iPad need the Share menu.
+    $("installBox").hidden = standalone() || store.get("installNo") === "1" || !(installPrompt || isIOS);
+    $("installBtn").hidden = !installPrompt;
+    $("installText").textContent = t("installDesc") + (installPrompt ? "" : " " + t("installIos"));
+  }
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; renderInstall(); });
+  window.addEventListener("appinstalled", () => { installPrompt = null; store.set("installNo", "1"); renderInstall(); });
+  $("installBtn").onclick = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    try { await installPrompt.userChoice; } catch {}
+    installPrompt = null;
+    renderInstall();
+  };
+  $("installNo").onclick = () => { store.set("installNo", "1"); renderInstall(); };
 
   // ---------- wiring ----------
   document.querySelectorAll("[data-pick]").forEach(b => b.onclick = () => { setUi(b.dataset.pick); go("Home"); });

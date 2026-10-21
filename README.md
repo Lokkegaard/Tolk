@@ -1,4 +1,4 @@
-# Tolk dansk ⇄ russisk
+# Tolk · Kiril Translate
 
 En lille webapp, der tolker mellem dansk og russisk med tale og tekst, uden AI.
 
@@ -21,6 +21,18 @@ I samtalen på to enheder:
 - Oversættelsen læses kun højt på modtagerens enhed.
 
 Hvis tal i oversættelsen ikke stemmer med originalen, eller en sætning kommer uoversat tilbage, tilføjes "(Bør bekræftes / Нужно уточнить)".
+
+## Billede af en tekst
+
+Tryk på kameraknappen ved tekstfeltet, og tag et billede af et opgaveark eller tavlen. Teksten genkendes direkte i browseren med det gratis open source-værktøj [Tesseract](https://tesseract.projectnaptha.com) (ingen AI-tjeneste), og du kan rette den, før den oversættes. Oversættelsen kan læses op eller sendes til samtalen. Første gang hentes ca. 8 MB; derefter husker browseren det.
+
+## Lær sproget
+
+Tryk på et ord i den andens original (eller i felterne på én enhed) for at se, hvad det betyder, og hør det almindeligt eller langsomt. Modtagne beskeder har både "Hør igen" og "Langsomt". Under Indstillinger → Læring kan al oplæsning gøres langsommere.
+
+## Installér som app
+
+Tolk kan lægges på hjemmeskærmen og åbner så i fuld skærm som en app. I Chrome og Edge vises en "Installér"-knap på forsiden; på iPhone og iPad: tryk på Del-knappen i Safari og vælg "Føj til hjemmeskærm". Selve appen åbner også uden net, men oversættelse, tale og forbindelse kræver internet. Virker talegenkendelsen ikke i appen på iPhone eller iPad, så brug siden i Safari.
 
 ## Tastaturgenveje (computer)
 
