@@ -7,18 +7,20 @@ En lille webapp, der tolker mellem dansk og russisk med tale og tekst, uden AI.
 ## Sådan bruges den
 
 1. **Vælg dit sprog.** Hele appen vises derefter på dit sprog. Det kan skiftes med DA/RU øverst.
-2. **Vælg, hvordan I vil tale sammen:**
-   - **Hver sin enhed:** tryk "Start samtale". Du får en kode på 8 cifre og en QR-kode. Den anden vælger sit sprog, trykker "Jeg har fået en kode" og skriver koden, eller scanner QR-koden.
+2. **Skriv dit navn**, så de andre kan se, hvem der siger hvad.
+3. **Vælg, hvordan I vil tale sammen:**
+   - **Hver sin enhed:** tryk "Start samtale". Du får en kode på 8 cifre og en QR-kode. De andre vælger deres sprog, trykker "Jeg har fået en kode" og skriver koden, eller scanner QR-koden. I kan være mange med i samme samtale, fx en lærer og flere elever, og flere kan tale samme sprog. "Invitér flere" viser koden igen.
    - **Én enhed sammen:** to felter, ét på hvert sprog, med hver sin mikrofonknap.
-3. **Tal eller skriv.** Tryk på mikrofonen. Den lytter, til du holder en pause, eller til du trykker igen. På en computer kan du også holde mikrofonknappen eller mellemrumstasten nede.
-4. Den talte tekst sendes efter 3 sekunder. Tryk "Ret" for at rette den først, eller "Send nu".
+4. **Tal eller skriv.** Tryk på mikrofonen. Den lytter, til du holder en pause, eller til du trykker igen. På en computer kan du også holde mikrofonknappen eller mellemrumstasten nede.
+5. Den talte tekst sendes efter 3 sekunder. Tryk "Ret" for at rette den først, eller "Send nu".
 
-I samtalen på to enheder:
+I samtalen på flere enheder:
 
-- Dine egne beskeder viser "Kommer frem som: …", altså oversættelsen oversat tilbage til dit sprog, og "✓ Leveret", når den anden har modtaget dem.
-- Den andens beskeder vises på dit sprog med originalen nedenunder og knappen "Hør igen".
-- "Den anden taler …" vises, mens den anden taler.
-- Oversættelsen læses kun højt på modtagerens enhed.
+- Øverst står, hvem der er med i samtalen.
+- Dine egne beskeder viser "Kommer frem som: …", altså oversættelsen oversat tilbage til dit sprog. Er I to, står der "✓ Leveret", når den anden har modtaget beskeden; er I flere, står der "✓ Sendt".
+- De andres beskeder vises på dit sprog med navn, originalen nedenunder og knapperne "Hør igen" og "Langsomt".
+- "Olga taler …" vises, mens nogen taler.
+- Oversættelsen læses kun højt for dem, der taler det andet sprog; dem med samme sprog har jo hørt det.
 
 Hvis tal i oversættelsen ikke stemmer med originalen, eller en sætning kommer uoversat tilbage, tilføjes "(Bør bekræftes / Нужно уточнить)".
 
@@ -42,7 +44,7 @@ Tolk kan lægges på hjemmeskærmen og åbner så i fuld skærm som en app. I Ch
 
 ## Forbindelse og privatliv
 
-Beskederne mellem enhederne sendes gennem den gratis open source-tjeneste [ntfy.sh](https://ntfy.sh), krypteret med AES-GCM. Både nøglen og navnet på samtalen dannes ud fra koden med PBKDF2, så koden aldrig forlader enheden. Selve oversættelsen laves af Google Oversæt (eller den valgte kilde), så skriv ikke CPR-numre eller andre følsomme oplysninger.
+Beskederne mellem enhederne sendes gennem den gratis open source-tjeneste [ntfy.sh](https://ntfy.sh), krypteret med AES-GCM. Både nøglen og navnet på samtalen dannes ud fra koden med PBKDF2, så koden aldrig forlader enheden. ntfy.sh har en daglig grænse for antal beskeder pr. netværk. Bruger mange på skolen appen samtidig, kan skolen køre sin egen ntfy-server (open source) og skrive adressen under Indstillinger → Avanceret; alle i samtalen skal bruge samme server. Selve oversættelsen laves af Google Oversæt (eller den valgte kilde), så skriv ikke CPR-numre eller andre følsomme oplysninger.
 
 ## Oversættelseskilder
 
